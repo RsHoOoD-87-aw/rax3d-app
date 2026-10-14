@@ -195,6 +195,10 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
         <div class="loss-sub" id="gapTxt"></div>
       </div>
     </div>
+    <div class="grid g2" style="margin-bottom:10px">
+      <button class="add" id="ordBtn" type="button">📥 طلب من الموقع</button>
+      <button class="add" id="pcBtn" type="button">🖨️ ملفات الطباعة</button>
+    </div>
     <div class="client grid g2">
       <div><label for="client">اسم العميل</label><input id="client" autocomplete="off"></div>
       <div><label for="phone">الجوال</label><input id="phone" inputmode="tel" autocomplete="off" style="direction:ltr;text-align:right"></div>
@@ -324,6 +328,22 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
   <button class="ghost" id="fileClose">إغلاق</button>
 </div></div>
 
+<div class="sheet" id="ordSheet"><div class="box">
+  <h2>📥 طلب من موقع RAX3D</h2>
+  <p style="color:var(--mute);font-size:14px;margin:6px 0">انسخ رسالة العميل من الخاص (أو رابط الطلب) والصقها هنا، وتتعبى الفاتورة تلقائياً.</p>
+  <textarea id="ordIn" rows="4" style="width:100%;direction:ltr" placeholder="الصق رسالة الطلب هنا"></textarea>
+  <p class="err" id="ordErr"></p>
+  <button class="save" id="ordGo">تعبئة الفاتورة</button>
+  <button class="ghost" id="ordClose">إغلاق</button>
+</div></div>
+
+<div class="sheet" id="pcSheet"><div class="box">
+  <h2>🖨️ ملفات الطباعة</h2>
+  <p style="color:var(--mute);font-size:14px;margin:6px 0">الملفات محفوظة في المستودع الخاص، وما تنفتح إلا من البرنامج.</p>
+  <div id="pcList" style="display:grid;gap:8px;margin:8px 0"></div>
+  <button class="ghost" id="pcClose">إغلاق</button>
+</div></div>
+
 <div class="sheet" id="supSheet" style="z-index:40"><div class="box">
   <h2>🛟 الدعم الفني</h2>
   <p style="color:var(--mute);font-size:14px;margin:4px 0 6px;text-align:center">طلبك يوصل للدعم الفني كإشعار داخل التطبيق</p>
@@ -419,7 +439,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '35';
+const APP_VERSION = '36';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -1230,7 +1250,7 @@ $('saveBtn').onclick = () => {
       lastNum = res.num;
       $('done').classList.add('on');
       if (res.milestone) { seenGoal(res.milestone.reached); setTimeout(() => celebrate(res.milestone), 400); }
-      mailInvoice('admin:' + res.num, 'new');
+      mailInvoice('admin:' + res.num, 'new'); mailOrderFiles(res.num);
       resetForm(); load();
     })
     .withFailureHandler(err => {
@@ -1244,7 +1264,7 @@ let lastNum = null;
 $('doneSave').onclick = () => { $('done').classList.remove('on'); if (lastNum !== null) savePdf(lastNum); };
 $('doneNew').onclick = () => $('done').classList.remove('on');
 
-function resetForm() { $('client').value = ''; $('phone').value = ''; items = [newItem()]; renderItems(); }
+function resetForm() { ORDER = null; $('client').value = ''; $('phone').value = ''; items = [newItem()]; renderItems(); }
 
 function renderLog() {
   const q = $('q').value.trim().toLowerCase();
@@ -1707,6 +1727,85 @@ function doFirstRun() {
 }
 function updateForgot() { $('forgotBtn').hidden = !loadDb().role; }
 
+
+// ================= v36: الربط مع موقع الطلبات + ملفات الطباعة =================
+// موقع العملاء (rax3dsa.github.io/shop) يحط في رسالة الطلب رابط فيه ?order=… ، والبرنامج يعبي الفاتورة منه.
+// ملفات الطباعة في المستودع الخاص files/<id>.3mf وبياناتها files/<id>.json ، وما تنحمل إلا بعد رمز الدخول.
+let ORDER = null;   // الطلب اللي انعبت منه الفاتورة الحالية (عشان إيميل ملفات الطباعة)
+function b64uDecode(s) { s = String(s).replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return b64d(s); }
+function parseOrder(text) {
+  const m = String(text || '').match(/[?&]order=([A-Za-z0-9_-]+)/) || String(text || '').trim().match(/^([A-Za-z0-9_-]{8,})$/);
+  if (!m) return null;
+  try { const o = JSON.parse(b64uDecode(m[1])); return o && Array.isArray(o.i) && o.i.length ? o : null; } catch (e) { return null; }
+}
+const pieceCache = {};
+async function pieceInfo(id) {
+  if (id in pieceCache) return pieceCache[id];
+  const sync = getSync(); if (!sync || !/^[a-z0-9_-]+$/i.test(id)) return pieceCache[id] = null;
+  try { const r = await readJson(sync, 'files/' + id + '.json', null); return pieceCache[id] = r.data; } catch (e) { return pieceCache[id] = null; }
+}
+async function fillFromOrder(o) {
+  const out = [];
+  for (const x of o.i.slice(0, 10)) {
+    const [id, name, color, q, g, size, note] = x, info = await pieceInfo(id);
+    const extra = [color && color !== 'كما بالصورة' ? color : '', size ? 'مقاس ' + size : '', note || ''].filter(Boolean).join(' · ');
+    out.push(Object.assign(newItem(), { desc: name + (extra ? ' — ' + extra : ''), q: +q || 1,
+      w: info && info.weight ? info.weight : (g || ''), h: info ? info.h || '' : '', m: info ? info.m || '' : '', sec: info ? info.sec || '' : '', pid: id, pinfo: !!info }));
+  }
+  items = out.length ? out : [newItem()]; ORDER = { o, at: Date.now() }; renderItems();
+  const miss = out.filter(it => !it.pinfo).length;
+  toast(miss ? '✅ انعبت الفاتورة — ' + miss + ' قطعة بدون وقت طباعة، كمّله يدوي' : '✅ انعبت الفاتورة من طلب الموقع');
+  document.querySelector('nav button[data-tab="new"]').click();
+}
+async function downloadPiece(id) {
+  const sync = getSync();
+  openFileSheet('ملف الطباعة', 'جاري التحميل من المستودع الخاص…');
+  try {
+    if (!sync) throw new Error('الجوال غير مربوط بالمستودع — فعّل الترقيم المشترك أول');
+    const info = await pieceInfo(id); if (!info || !info.file) throw new Error('ما لقينا ملف لهذي القطعة');
+    $('fileTitle').textContent = '🖨️ ' + info.name;
+    const ctrl = new AbortController(), tm = setTimeout(() => ctrl.abort(), 180000);
+    const res = await fetch('https://api.github.com/repos/' + sync.repo + '/contents/' + info.file, { cache: 'no-store', signal: ctrl.signal,
+      headers: { Authorization: 'Bearer ' + sync.token, Accept: 'application/vnd.github.raw+json', 'X-GitHub-Api-Version': '2022-11-28' } }).finally(() => clearTimeout(tm));
+    if (!res.ok) throw ghErr(res);
+    const blob = new Blob([await res.arrayBuffer()], { type: 'application/octet-stream' }), name = info.fileName || (id + '.3mf');
+    mailedFiles.add(name);   // ملف كبير — ما ينرسل للإيميل
+    fileReady(blob, name);
+    $('fileMsg').textContent = name + ' · ⏱ ' + info.h + ' س ' + info.m + ' د · ⚖️ ' + info.weight + ' غ' + (info.settings ? ' · ' + info.settings : '');
+  } catch (e) { $('fileMsg').textContent = 'تعذّر التحميل: ' + ((e && e.message) || e); $('fileGo').textContent = 'غير متاح'; }
+}
+async function openPieces() {
+  $('pcSheet').classList.add('on'); const box = $('pcList'); box.innerHTML = '<p style="color:var(--mute)">جاري التحميل…</p>';
+  const sync = getSync(); if (!sync) { box.innerHTML = '<p class="err">الجوال غير مربوط بالمستودع</p>'; return; }
+  try {
+    const idx = (await readJson(sync, 'files/index.json', { pieces: [] })).data, list = [];
+    for (const id of (idx.pieces || [])) { const i = await pieceInfo(id); if (i) list.push(i); }
+    box.innerHTML = list.length ? list.map(i => `<button class="add" type="button" data-pc="${esc(i.id)}" style="text-align:right">⬇️ ${esc(i.name)}<br><small style="color:var(--mute)">⏱ ${i.h} س ${i.m} د · ⚖️ ${i.weight} غ · ${esc(i.size || '')}</small></button>`).join('') : '<p style="color:var(--mute)">ما فيه ملفات بعد</p>';
+  } catch (e) { box.innerHTML = '<p class="err">' + esc((e && e.message) || e) + '</p>'; }
+}
+function mailOrderFiles(num) {   // بعد حفظ فاتورة جاية من الموقع: إيميل بالقطع وروابط ملفات الطباعة
+  if (!ORDER) return; const o = ORDER.o; ORDER = null;
+  const lines = o.i.map(x => '• ' + x[1] + ' [' + x[0] + '] — ' + (x[2] || '') + ' × ' + x[3] + (x[5] ? ' — مقاس ' + x[5] : '') + (x[6] ? ' — ملاحظة: ' + x[6] : ''));
+  const links = [...new Set(o.i.map(x => x[0]))].map(id => id + ': https://rax3dsa.github.io/?piece=' + encodeURIComponent(id));
+  notify('🖨️ طلب جاهز للطباعة — فاتورة رقم ' + num, { 'رقم الفاتورة': num, 'القطع': lines.join('\n'),
+    'ملفات الطباعة (تحتاج رمز الدخول)': links.join('\n') });
+}
+$('ordBtn').onclick = () => { $('ordErr').textContent = ''; $('ordIn').value = ''; $('ordSheet').classList.add('on');
+  try { navigator.clipboard.readText().then(t => { if (parseOrder(t)) $('ordIn').value = t; }).catch(() => {}); } catch (e) {} };
+$('ordClose').onclick = () => $('ordSheet').classList.remove('on');
+$('ordGo').onclick = () => { const o = parseOrder($('ordIn').value); if (!o) { $('ordErr').textContent = 'ما لقينا رابط طلب صحيح في النص'; return; }
+  $('ordSheet').classList.remove('on'); fillFromOrder(o); };
+$('pcBtn').onclick = openPieces;
+$('pcClose').onclick = () => $('pcSheet').classList.remove('on');
+$('pcList').addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (b) { $('pcSheet').classList.remove('on'); downloadPiece(b.dataset.pc); } });
+let LINK = (() => { const p = new URLSearchParams(location.search); return { order: p.get('order'), piece: p.get('piece') }; })();
+if (LINK.order || LINK.piece) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+function handleLinks() {   // تنفذ مرة وحدة بعد الدخول بالرمز
+  const L = LINK; LINK = {};
+  if (L.order) { const o = parseOrder('?order=' + L.order); if (o) fillFromOrder(o); else toast('⚠️ رابط الطلب غير صحيح'); }
+  if (L.piece) downloadPiece(L.piece);
+}
+
 let CARRY = null;
 setTimeout(() => flushOutbox(), 3000);   // رسائل وصلت مع الدخول (تظهر مرة وحدة)
 function load() {
@@ -1721,6 +1820,7 @@ function load() {
       if (d.pinNotice || cy.pinNotice) showOk('تم تعديل الرقم السري بنجاح', 'من الحين تدخل بالرقم الجديد');
       if ($('recMail') && !$('recMail').value) $('recMail').value = d.recMail || '';
       if (d.role === 'admin') setTimeout(checkMonthly, 4000);
+      if (LINK.order || LINK.piece) setTimeout(handleLinks, 300);
     })
     .withFailureHandler(err => {
       if (pinError(err)) { if ($('boot')) $('boot').textContent = ''; return; }
