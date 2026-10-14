@@ -396,12 +396,12 @@ function open3D(){
  const st=$("#v3dStage");
  if(!V.renderer){
   V.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});V.renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  V.renderer.outputEncoding=THREE.sRGBEncoding;V.renderer.toneMapping=THREE.ACESFilmicToneMapping;V.renderer.toneMappingExposure=1.05;
+  V.renderer.outputEncoding=THREE.sRGBEncoding;V.renderer.toneMapping=THREE.NoToneMapping;
   V.scene=new THREE.Scene();V.cam=new THREE.PerspectiveCamera(35,1,0.1,5000);
-  V.scene.add(new THREE.HemisphereLight(0xffffff,0xd8c8b0,0.75));
-  const k=new THREE.DirectionalLight(0xffffff,0.9);k.position.set(1,1.4,1.2);V.scene.add(k);
+  V.scene.add(new THREE.HemisphereLight(0xffffff,0x8a7f72,0.55));
+  const k=new THREE.DirectionalLight(0xffffff,1.0);k.position.set(1.2,1.6,1.4);V.scene.add(k);const rim=new THREE.DirectionalLight(0xffffff,0.45);rim.position.set(-1.4,0.4,-1.2);V.scene.add(rim);
   const f=new THREE.DirectionalLight(0xfff4e6,0.35);f.position.set(-1.2,0.6,-0.6);V.scene.add(f);
-  V.controls=new THREE.OrbitControls(V.cam,V.renderer.domElement);V.controls.enableDamping=true;V.controls.autoRotate=true;V.controls.autoRotateSpeed=1.6;V.controls.enablePan=false;
+  V.controls=new THREE.OrbitControls(V.cam,V.renderer.domElement);V.controls.enableDamping=true;V.controls.autoRotate=true;V.controls.autoRotateSpeed=1.6;V.controls.enablePan=false;V.controls.minPolarAngle=Math.PI*0.12;V.controls.maxPolarAngle=Math.PI*0.62;
   V.controls.addEventListener("start",()=>{V.controls.autoRotate=false});
   const loop=()=>{V.raf=requestAnimationFrame(loop);if(!$("#v3dBg").hidden){V.controls.update();V.renderer.render(V.scene,V.cam)}};loop();
  }
@@ -416,13 +416,13 @@ function open3D(){
    const name=(o.name||o.parent&&o.parent.name||"").toLowerCase();
    const keep=(m.keep||[]).some(k=>name.includes(k.toLowerCase()));
    const old=o.material&&o.material.color?o.material.color.clone():new THREE.Color(0xffffff);
-   o.material=new THREE.MeshStandardMaterial({color:old,roughness:0.62,metalness:0.0,side:THREE.DoubleSide,vertexColors:!!(o.geometry.attributes.color&&keep)});
+   o.material=new THREE.MeshStandardMaterial({color:old,roughness:0.5,metalness:0.0,side:THREE.DoubleSide,vertexColors:!!(o.geometry.attributes.color&&keep)});
    if(!keep)V.tint.push(o.material)});
   if(!V.tint.length)obj.traverse(o=>{if(o.isMesh)V.tint.push(o.material)});
   obj.rotation.x=-Math.PI/2;/* print files are Z-up */
   const box=new THREE.Box3().setFromObject(obj),c=box.getCenter(new THREE.Vector3()),s=box.getSize(new THREE.Vector3());
   obj.position.sub(c);obj.position.y+=s.y*0.0;const d=Math.max(s.x,s.y,s.z);
-  V.cam.position.set(d*1.25,d*0.85,d*1.6);V.cam.near=d/100;V.cam.far=d*20;V.cam.updateProjectionMatrix();V.controls.target.set(0,0,0);V.controls.autoRotate=true;
+  V.cam.position.set(d*1.45,d*0.95,d*1.85);V.cam.near=d/100;V.cam.far=d*20;V.cam.updateProjectionMatrix();V.controls.target.set(0,0,0);V.controls.autoRotate=true;
   V.scene.add(obj);set3DColor(ci);$("#v3dMsg").hidden=true};
  const fail=()=>{$("#v3dMsg").textContent="ما قدرنا نحمّل المجسم، جرّب مرة ثانية."};
  if(m.grid)fetch(m.file).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>done(new THREE.Mesh(ringGrid(d),new THREE.MeshStandardMaterial()))).catch(fail);
@@ -613,5 +613,12 @@ function applyLang(){const en=LANG==="en";document.documentElement.lang=en?"en":
  if(en){trNode(document.body);MO.observe(document.body,{childList:true,subtree:true,characterData:true})}}
 $("#langBtn").onclick=()=>{LANG=LANG==="en"?"ar":"en";try{localStorage.setItem("rax3d_lang",LANG)}catch(_){}
  if(LANG==="ar"){location.reload();return}applyLang();render(false)};
+/* lock page scroll while a dialog is open (stops the page sliding behind the 3D viewer on phones) */
+(()=>{const ids=["v3dBg","mbg","ibg","abg"];let y=0,locked=false;
+ const sync=()=>{const open=ids.some(i=>{const e=document.getElementById(i);return e&&!e.hidden});if(open===locked)return;locked=open;
+  const b=document.body;if(open){y=scrollY;b.style.position="fixed";b.style.top=-y+"px";b.style.left="0";b.style.right="0";b.style.overflow="hidden"}
+  else{b.style.position=b.style.top=b.style.left=b.style.right=b.style.overflow="";scrollTo(0,y)}};
+ const mo=new MutationObserver(sync);ids.forEach(i=>{const e=document.getElementById(i);if(e)mo.observe(e,{attributes:true,attributeFilter:["hidden"]})})})();
+document.getElementById("v3dStage").addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
 render(false);applyLang();
 </script>
