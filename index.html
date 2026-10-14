@@ -196,7 +196,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
       </div>
     </div>
     <div class="grid g2" style="margin-bottom:10px">
-      <button class="add" id="ordBtn" type="button">📥 كود الطلب</button>
+      <button class="add" id="ordBtn" type="button">📥 طلب من الموقع</button>
       <button class="add" id="pcBtn" type="button">🖨️ ملفات الطباعة</button>
     </div>
     <div class="client grid g2">
@@ -329,10 +329,10 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 </div></div>
 
 <div class="sheet" id="ordSheet"><div class="box">
-  <h2>📥 كود الطلب</h2>
-  <p style="color:var(--mute);font-size:14px;margin:6px 0">انسخ كود الطلب من رسالة العميل (يبدأ بـ RX2) والصقه هنا، وتتعبى الفاتورة تلقائياً. تقدر تلصق الرسالة كاملة بعد.</p>
-  <label for="ordIn">كود الطلب</label>
-  <textarea id="ordIn" rows="3" style="width:100%;direction:ltr;font-family:monospace" placeholder="RX2…"></textarea>
+  <h2>📥 طلب من الموقع</h2>
+  <p style="color:var(--mute);font-size:14px;margin:6px 0">في انستقرام اضغط مطولاً على رسالة العميل ← نسخ، والصقها هنا كاملة. البرنامج يقرأ القطع والألوان والكميات والمقاسات والملاحظات والاسم والجوال، ويحفظ كود الطلب مع الفاتورة (ما ينطبع فيها).</p>
+  <label for="ordIn">رسالة الطلب</label>
+  <textarea id="ordIn" rows="6" style="width:100%" placeholder="مرحبًا RAX3D 👋 …"></textarea>
   <p class="err" id="ordErr"></p>
   <button class="save" id="ordGo">تعبئة الفاتورة</button>
   <button class="ghost" id="ordClose">إغلاق</button>
@@ -440,7 +440,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '39';
+const APP_VERSION = '40';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -719,7 +719,7 @@ const API = {
     const lines = its.map(it => { const c = calcLocal(S, it); return { desc: String(it.desc).trim(), q: c.q, unit: c.unit, line: c.line, disc: c.disc, total: c.total, profit: c.profit, cost: R2(c.cost), sugg: (+it.price > 0) ? c.sugg * c.q : 0, w: +it.w || 0, h: +it.h || 0, m: +it.m || 0, sec: +it.sec || 0, type: it.type === 'مجموعة' ? 'مجموعة' : 'واحدة', auto: !(+it.price > 0) }; });
     const before = db.log.reduce((a, r) => a + (Number(r.total) || 0), 0);
     const rec = {
-      num: num, date: todayStr(), by: role, client: String(data.client || '').trim(), phone: String(data.phone || '').trim(),
+      num: num, date: todayStr(), by: role, client: String(data.client || '').trim(), phone: String(data.phone || '').trim(), code: String(data.code || '').trim().slice(0, 20),
       desc: lines.map(l => l.desc + ' (' + l.q + ')').join(' ، '), qty: lines.reduce((a, l) => a + l.q, 0),
       disc: R2(lines.reduce((a, l) => a + l.disc, 0)), total: R2(lines.reduce((a, l) => a + l.total, 0)),
       profit: R2(lines.reduce((a, l) => a + l.profit, 0)), sugg: R2(lines.reduce((a, l) => a + l.sugg, 0)),
@@ -1269,7 +1269,7 @@ $('saveBtn').onclick = () => {
       if (pinError(err)) return;
       $('err').textContent = 'لم تُحفظ الفاتورة: ' + (err.message || err);
     })
-    .saveFromApp({ client: $('client').value, phone: $('phone').value, items: valid }, PIN);
+    .saveFromApp({ client: $('client').value, phone: $('phone').value, items: valid, code: ORDER && ORDER.o && ORDER.o.ref || '' }, PIN);
 };
 let lastNum = null;
 $('doneSave').onclick = () => { $('done').classList.remove('on'); if (lastNum !== null) savePdf(lastNum); };
@@ -1289,12 +1289,12 @@ function loyaltyCard() {   // ترتيب العملاء حسب رصيد نقاط
 function renderLog() {
   const q = $('q').value.trim().toLowerCase();
   const rows = DATA.log.slice().reverse().filter(r => !q ||
-    (r.client + ' ' + r.phone + ' ' + r.num + ' ' + r.desc).toLowerCase().includes(q));
+    (r.client + ' ' + r.phone + ' ' + r.num + ' ' + r.desc + ' ' + (r.code || '')).toLowerCase().includes(q));
   $('logList').innerHTML = rows.length ? rows.map(r => `
     <div class="row">
       <div class="row-h"><b>${esc(r.client || 'بدون اسم')}${r.by === 'partner' ? '<span class="tag p">📝 مدخل البيانات</span>' : ''}${r.edited ? '<span class="tag">معدّلة</span>' : ''}${pts(r) ? '<span class="tag" style="color:var(--gold)">⭐ +' + pts(r) + '</span>' : ''}</b><span class="amt">${fmt(r.total)} ريال</span></div>
       <p>${esc(r.desc)}</p>
-      <div class="meta"><span>رقم ${esc(r.num)} &nbsp; ${esc(r.date)}${r.phone ? ' &nbsp; ' + esc(r.phone) : ''}</span>
+      <div class="meta"><span>رقم ${esc(r.num)} &nbsp; ${esc(r.date)}${r.phone ? ' &nbsp; ' + esc(r.phone) : ''}${r.code ? ' &nbsp; <span dir="ltr">' + esc(r.code) + '</span>' : ''}</span>
       <span class="acts"><button class="pdf dl" data-ed="${esc(rk(r))}">✏️ تعديل</button><button class="pdf" data-dl="1" data-num="${esc(rk(r))}">📄 PDF</button></span></div>
     </div>`).join('')
     : `<div class="empty">${q ? 'لا توجد فاتورة تطابق البحث' : 'لا توجد فواتير بعد. احفظ أول فاتورة من تبويب «فاتورة جديدة».'}</div>`;
@@ -1758,6 +1758,22 @@ function b62bytes(s) { let n = 0n; for (const ch of s) { const v = B62.indexOf(c
 async function inflateRaw(bytes) { const ds = new DecompressionStream('deflate-raw'); const s = new Blob([bytes]).stream().pipeThrough(ds); return new Uint8Array(await new Response(s).arrayBuffer()); }
 let CATALOG = null;
 async function catalog() { if (CATALOG) return CATALOG; try { const r = await fetch('/shop/catalog.json', { cache: 'no-store' }); CATALOG = await r.json(); } catch (e) { CATALOG = { items: {}, colors: [] }; } return CATALOG; }
+function parseMsg(text, cat) {   // رسالة الطلب الجديدة (بدون رابط): نقرأ الخانات سطر سطر
+  const s = String(text || ''); if (!/(القطعة|القطعه|Piece)\s*:/.test(s)) return null;
+  const val = (blk, keys) => { for (const k of keys) { const m = blk.match(new RegExp('\\*?\\s*' + k + '\\s*:\\s*(.*)')); if (m) return m[1].trim(); } return ''; };
+  const byName = {}; Object.entries(cat.items || {}).forEach(([id, it]) => { byName[(it.n || '').trim()] = id; if (it.en) byName[it.en.trim().toLowerCase()] = id; });
+  const blocks = s.split(/\n(?=\s*\*?\s*(?:القطعة|القطعه|Piece)\s*:)/).slice(1);
+  const items = blocks.map(b => {
+    const name = val(b, ['القطعة', 'القطعه', 'Piece']), id = byName[name] || byName[name.toLowerCase()] || '', it = (cat.items || {})[id] || {};
+    let size = val(b, ['المقاس', 'Size']); if (/^(الأصلي|Original)/.test(size)) size = ''; size = size.replace(/\s*(مم|mm)\s*$/, '');
+    let note = val(b, ['خيارات إضافية', 'خيارات اضافية', 'Extra options']); if (/^(لا يوجد|None)$/i.test(note)) note = '';
+    const color = val(b, ['اللون', 'Colour', 'Color']), q = parseInt(val(b, ['الكمية', 'Quantity']), 10) || 1;
+    return [id || name, it.n || name, color, q, it.g || 0, size, note];
+  }).filter(x => x[1]);
+  if (!items.length) return null;
+  const n = val(s, ['الاسم', 'Name']), ph = val(s, ['الجوال', 'Mobile']), ref = (s.match(/RX-[A-Z0-9]{4,8}/) || [''])[0];
+  return { v: 3, i: items, c: n || ph ? [n, ph] : null, ref };
+}
 async function parseCode(text) {   // كود الطلب من الموقع: RX2 + z (مضغوط) أو j + base62
   const m = String(text || '').match(/RX2([zj])([0-9A-Za-z]{6,})/); if (!m) return null;
   try {
@@ -1821,13 +1837,13 @@ function mailOrderFiles(num) {   // بعد حفظ فاتورة جاية من ا�
   if (!ORDER) return; const o = ORDER.o; ORDER = null;
   const lines = o.i.map(x => '• ' + x[1] + ' [' + x[0] + '] — ' + (x[2] || '') + ' × ' + x[3] + (x[5] ? ' — مقاس ' + x[5] : '') + (x[6] ? ' — ملاحظة: ' + x[6] : ''));
   const links = [...new Set(o.i.map(x => x[0]))].map(id => id + ': https://rax3dsa.github.io/?piece=' + encodeURIComponent(id));
-  notify('🖨️ طلب جاهز للطباعة — فاتورة رقم ' + num, { 'رقم الفاتورة': num, 'القطع': lines.join('\n'),
+  notify('🖨️ طلب جاهز للطباعة — فاتورة رقم ' + num, { 'رقم الفاتورة': num, 'كود الطلب': o.ref || '—', 'القطع': lines.join('\n'),
     'ملفات الطباعة (تحتاج رمز الدخول)': links.join('\n') });
 }
 $('ordBtn').onclick = () => { $('ordErr').textContent = ''; $('ordIn').value = ''; $('ordSheet').classList.add('on');
-  try { navigator.clipboard.readText().then(t => { if (/RX2[zj][0-9A-Za-z]{6,}/.test(t) || parseOrder(t)) $('ordIn').value = (t.match(/RX2[zj][0-9A-Za-z]+/) || [t])[0]; }).catch(() => {}); } catch (e) {} };
+  try { navigator.clipboard.readText().then(t => { if (/(القطعة|Piece)\s*:/.test(t) || /RX2[zj]/.test(t) || parseOrder(t)) $('ordIn').value = t; }).catch(() => {}); } catch (e) {} };
 $('ordClose').onclick = () => $('ordSheet').classList.remove('on');
-$('ordGo').onclick = async () => { const v = $('ordIn').value, o = (await parseCode(v)) || parseOrder(v); if (!o) { $('ordErr').textContent = 'ما لقينا كود طلب صحيح — تأكد إنك نسخت الكود كامل'; return; }
+$('ordGo').onclick = async () => { const v = $('ordIn').value, o = parseMsg(v, await catalog()) || (await parseCode(v)) || parseOrder(v); if (!o) { $('ordErr').textContent = 'ما لقينا كود طلب صحيح — تأكد إنك نسخت الكود كامل'; return; }
   $('ordSheet').classList.remove('on'); fillFromOrder(o); };
 $('pcBtn').onclick = openPieces;
 $('pcClose').onclick = () => $('pcSheet').classList.remove('on');
