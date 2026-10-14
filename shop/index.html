@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px
   padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:0 96px}
 button{font:inherit;color:inherit}
 button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.promo{display:block;overflow:hidden;background:#17130e;color:#f6efe4;border-bottom:1px solid rgba(224,177,85,.35);text-decoration:none;margin-inline:calc(-1 * max(12px,env(safe-area-inset-left,0px)));padding-block:11px;font-size:15.5px;font-weight:600;line-height:1.5;white-space:nowrap}
+.promo{display:block;overflow:hidden;background:#17130e;color:#f6efe4;border-bottom:1px solid rgba(224,177,85,.35);text-decoration:none;margin-inline:calc(-1 * max(12px,env(safe-area-inset-left,0px)));padding-top:calc(11px + env(safe-area-inset-top,0px));padding-bottom:11px;font-size:15.5px;font-weight:600;line-height:1.5;white-space:nowrap}
 .promo .track{display:inline-flex;gap:48px;padding-inline:24px;animation:slide 48s linear infinite}
 .promo b{color:#e8b95a;font-weight:800}
 @keyframes slide{from{transform:translateX(0)}to{transform:translateX(50%)}}

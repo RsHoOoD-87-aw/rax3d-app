@@ -176,10 +176,10 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
     <div class="num">فاتورة رقم<b id="invNum">—</b>
       <div class="hb"><button class="hbtn" id="bellBtn" hidden aria-label="طلبات مدخل البيانات">🔔<i id="bellN" hidden></i></button><button class="hbtn" id="supBtn" hidden>🛟 الدعم الفني</button><button class="logout" id="logoutBtn">قفل التطبيق</button></div></div>
   </header>
-  <nav class="adm">
+  <nav>
     <button class="on" data-tab="new">فاتورة جديدة</button>
     <button data-tab="log">السجل</button>
-    <button data-tab="stats">الإحصائيات</button>
+    <button data-tab="stats" class="adm">الإحصائيات</button>
   </nav>
 
   <div id="boot" class="loading">جاري التحميل…</div>
@@ -209,7 +209,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
   </section>
 
   <section id="log">
-    <div class="tools"><button class="ghost" id="dlLog">⬇️ سجل الفواتير</button><button class="ghost" id="backupBtn">📦 نسخة احتياطية</button></div>
+    <div class="tools adm"><button class="ghost" id="dlLog">⬇️ سجل الفواتير</button><button class="ghost" id="backupBtn">📦 نسخة احتياطية</button></div>
     <div class="ordq" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;border:1px solid var(--gold);border-radius:var(--r-lg,14px);padding:0 12px;background:var(--panel)">
       <span style="font-weight:800;color:var(--gold);direction:ltr">🔎 ORD-</span>
       <input id="oq" inputmode="numeric" autocomplete="off" placeholder="رقم الطلب" style="flex:1;border:0;background:none;direction:ltr;text-align:left;font-size:18px;padding:12px 0;color:inherit;outline:none">
@@ -444,7 +444,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '41';
+const APP_VERSION = '42';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -696,7 +696,7 @@ const API = {
       const cat = ((db.shared && db.shared.catalog) || []).slice(); db.catalog.forEach(c => upsertCat(cat, c));
       const ts = Number((db.shared && db.shared.pinChangedTs) || 0), notice = ts > Number(db.seenPinTs || 0);
       if (notice) { db.seenPinTs = ts; saveDb(db); }   // رسالة «تم التعديل» مرة وحدة بس
-      return { settings: partnerSettings(db), nextNum: db.nextNum, today: todayStr(), role: role, catalog: cat, log: [], goal: null, pinNotice: notice };
+      return { settings: partnerSettings(db), nextNum: db.nextNum, today: todayStr(), role: role, catalog: cat, log: (db.log || []).filter(r => r.by === 'partner'), goal: null, pinNotice: notice };   // مدخل البيانات يشوف فواتيره في السجل
     }
     const notice = !!db.pinNotice;
     if (notice) { delete db.pinNotice; saveDb(db); }
@@ -1300,7 +1300,7 @@ function renderLog() {
       <div class="row-h"><b>${esc(r.client || 'بدون اسم')}${r.by === 'partner' ? '<span class="tag p">📝 مدخل البيانات</span>' : ''}${r.edited ? '<span class="tag">معدّلة</span>' : ''}${pts(r) ? '<span class="tag" style="color:var(--gold)">⭐ +' + pts(r) + '</span>' : ''}</b><span class="amt">${fmt(r.total)} ريال</span></div>
       <p>${esc(r.desc)}</p>
       <div class="meta"><span><b dir="ltr" style="color:var(--gold)">ORD-${esc(r.num)}</b> &nbsp; ${esc(r.date)}${r.phone ? ' &nbsp; ' + esc(r.phone) : ''}${r.code ? ' &nbsp; <span dir="ltr">' + esc(r.code) + '</span>' : ''}</span>
-      <span class="acts"><button class="pdf dl" data-ed="${esc(rk(r))}">✏️ تعديل</button><button class="pdf" data-dl="1" data-num="${esc(rk(r))}">📄 PDF</button></span></div>
+      <span class="acts"><button class="pdf dl adm" data-ed="${esc(rk(r))}">✏️ تعديل</button><button class="pdf" data-dl="1" data-num="${esc(rk(r))}">📄 PDF</button></span></div>
     </div>`).join('')
     : `<div class="empty">${oq ? 'ما فيه طلب برقم ORD-' + esc(oq) : q ? 'لا توجد فاتورة تطابق البحث' : 'لا توجد فواتير بعد. احفظ أول فاتورة من تبويب «فاتورة جديدة».'}</div>`;
 }
