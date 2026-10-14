@@ -196,7 +196,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
       </div>
     </div>
     <div class="grid g2" style="margin-bottom:10px">
-      <button class="add" id="ordBtn" type="button">📥 طلب من الموقع</button>
+      <button class="add" id="ordBtn" type="button">📥 كود الطلب</button>
       <button class="add" id="pcBtn" type="button">🖨️ ملفات الطباعة</button>
     </div>
     <div class="client grid g2">
@@ -329,9 +329,10 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 </div></div>
 
 <div class="sheet" id="ordSheet"><div class="box">
-  <h2>📥 طلب من موقع RAX3D</h2>
-  <p style="color:var(--mute);font-size:14px;margin:6px 0">انسخ رسالة العميل من الخاص (أو رابط الطلب) والصقها هنا، وتتعبى الفاتورة تلقائياً.</p>
-  <textarea id="ordIn" rows="4" style="width:100%;direction:ltr" placeholder="الصق رسالة الطلب هنا"></textarea>
+  <h2>📥 كود الطلب</h2>
+  <p style="color:var(--mute);font-size:14px;margin:6px 0">انسخ كود الطلب من رسالة العميل (يبدأ بـ RX2) والصقه هنا، وتتعبى الفاتورة تلقائياً. تقدر تلصق الرسالة كاملة بعد.</p>
+  <label for="ordIn">كود الطلب</label>
+  <textarea id="ordIn" rows="3" style="width:100%;direction:ltr;font-family:monospace" placeholder="RX2…"></textarea>
   <p class="err" id="ordErr"></p>
   <button class="save" id="ordGo">تعبئة الفاتورة</button>
   <button class="ghost" id="ordClose">إغلاق</button>
@@ -439,7 +440,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '38';
+const APP_VERSION = '39';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -1752,6 +1753,19 @@ function updateForgot() { $('forgotBtn').hidden = !loadDb().role; }
 // ملفات الطباعة في المستودع الخاص files/<id>.3mf وبياناتها files/<id>.json ، وما تنحمل إلا بعد رمز الدخول.
 let ORDER = null;   // الطلب اللي انعبت منه الفاتورة الحالية (عشان إيميل ملفات الطباعة)
 function b64uDecode(s) { s = String(s).replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return b64d(s); }
+const B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+function b62bytes(s) { let n = 0n; for (const ch of s) { const v = B62.indexOf(ch); if (v < 0) throw new Error('bad'); n = n * 62n + BigInt(v); } const out = []; while (n > 0n) { out.unshift(Number(n % 256n)); n /= 256n; } return new Uint8Array(out.slice(1)); }
+async function inflateRaw(bytes) { const ds = new DecompressionStream('deflate-raw'); const s = new Blob([bytes]).stream().pipeThrough(ds); return new Uint8Array(await new Response(s).arrayBuffer()); }
+let CATALOG = null;
+async function catalog() { if (CATALOG) return CATALOG; try { const r = await fetch('/shop/catalog.json', { cache: 'no-store' }); CATALOG = await r.json(); } catch (e) { CATALOG = { items: {}, colors: [] }; } return CATALOG; }
+async function parseCode(text) {   // كود الطلب من الموقع: RX2 + z (مضغوط) أو j + base62
+  const m = String(text || '').match(/RX2([zj])([0-9A-Za-z]{6,})/); if (!m) return null;
+  try {
+    let b = b62bytes(m[2]); if (m[1] === 'z') b = await inflateRaw(b);
+    const o = JSON.parse(new TextDecoder().decode(b)), cat = await catalog();
+    return { v: 2, c: o.c, i: (o.i || []).map(([id, ci, q, size, note]) => { const it = cat.items[id] || {}; return [id, it.n || id, cat.colors[ci] || '', q, it.g || 0, size, note]; }) };
+  } catch (e) { return null; }
+}
 function parseOrder(text) {
   const m = String(text || '').match(/[?&]order=([A-Za-z0-9_-]+)/) || String(text || '').trim().match(/^([A-Za-z0-9_-]{8,})$/);
   if (!m) return null;
@@ -1811,9 +1825,9 @@ function mailOrderFiles(num) {   // بعد حفظ فاتورة جاية من ا�
     'ملفات الطباعة (تحتاج رمز الدخول)': links.join('\n') });
 }
 $('ordBtn').onclick = () => { $('ordErr').textContent = ''; $('ordIn').value = ''; $('ordSheet').classList.add('on');
-  try { navigator.clipboard.readText().then(t => { if (parseOrder(t)) $('ordIn').value = t; }).catch(() => {}); } catch (e) {} };
+  try { navigator.clipboard.readText().then(t => { if (/RX2[zj][0-9A-Za-z]{6,}/.test(t) || parseOrder(t)) $('ordIn').value = (t.match(/RX2[zj][0-9A-Za-z]+/) || [t])[0]; }).catch(() => {}); } catch (e) {} };
 $('ordClose').onclick = () => $('ordSheet').classList.remove('on');
-$('ordGo').onclick = () => { const o = parseOrder($('ordIn').value); if (!o) { $('ordErr').textContent = 'ما لقينا رابط طلب صحيح في النص'; return; }
+$('ordGo').onclick = async () => { const v = $('ordIn').value, o = (await parseCode(v)) || parseOrder(v); if (!o) { $('ordErr').textContent = 'ما لقينا كود طلب صحيح — تأكد إنك نسخت الكود كامل'; return; }
   $('ordSheet').classList.remove('on'); fillFromOrder(o); };
 $('pcBtn').onclick = openPieces;
 $('pcClose').onclick = () => $('pcSheet').classList.remove('on');
