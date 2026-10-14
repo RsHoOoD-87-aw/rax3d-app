@@ -1,0 +1,19 @@
+{
+  "id": "/shop/",
+  "name": "RAX3D — اطلب قطعتك",
+  "short_name": "RAX3D",
+  "description": "اختر قطعتك واللون، ونطبعها لك بالطباعة ثلاثية الأبعاد",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/shop/",
+  "scope": "/shop/",
+  "display": "standalone",
+  "background_color": "#17130e",
+  "theme_color": "#17130e",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}

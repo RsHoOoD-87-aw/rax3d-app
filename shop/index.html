@@ -2,7 +2,10 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="RAX3D — اختر قطعتك واللون، ونطبعها لك بالطباعة ثلاثية الأبعاد">
-<link rel="icon" href="/icon.png"><link rel="apple-touch-icon" href="/icon.png">
+<link rel="icon" type="image/svg+xml" href="icon.svg"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#17130e"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RAX3D"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>RAX3D | اطلب قطعتك</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
@@ -61,6 +64,18 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid va
 .rail button[aria-current="true"]{color:var(--fg);font-weight:600;background:var(--surface);border-color:var(--line)}
 .rail button[aria-current="true"] img{border-color:var(--accent)}
 .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+.ttl img{width:26px;height:26px;border-radius:7px;vertical-align:-7px;margin-inline-end:7px}
+.hero .mark{width:76px;height:76px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.18);margin-bottom:6px}
+.instbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;max-width:420px;margin:10px auto 0;font-weight:600;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:14px;padding:12px;cursor:pointer;font-size:15px}
+.instbtn img{width:24px;height:24px;border-radius:6px}
+.rail .inst{color:var(--accent);font-weight:600}
+.ist{display:grid;gap:10px;margin:6px 0 4px;padding:0;list-style:none;counter-reset:s}
+.ist li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;line-height:1.7;font-size:15px}
+.ist li::before{content:counter(s);width:28px;height:28px;border-radius:999px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-weight:700;font-size:14px}
+.ist .k{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:0 7px;font-weight:600;white-space:nowrap}
+.ist svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.idone{text-align:center;font-size:44px;line-height:1}
+.inote{font-size:13px;color:var(--muted);line-height:1.7}
 .hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding-top:6px}
 .wm{font-family:var(--display);font-weight:700;font-size:32px;letter-spacing:.04em;direction:ltr;line-height:1.1}
 .handle{direction:ltr;font-size:13px;color:var(--muted)}
@@ -169,7 +184,7 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
   <button class="nav" id="back" type="button" aria-label="الصفحة السابقة"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
   <button class="nav" id="fwd" type="button" aria-label="الصفحة التالية"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
   <button class="menubtn" id="menuBtn" type="button" aria-label="الأقسام" aria-expanded="false" aria-controls="rail"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="mlbl">الأقسام</span></button>
-  <div class="ttl" id="ttl"><span>RAX3D</span></div>
+  <div class="ttl" id="ttl"><span><img src="icon.svg" alt="">RAX3D</span></div>
   <button class="cartbtn" id="cartBtn" type="button">طلبي <b id="cartN">0</b></button>
 </header>
 <a class="chat" id="chat" href="https://ig.me/m/rax3d.sa" target="_blank" rel="noopener" aria-label="راسلنا على انستقرام"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></a>
@@ -189,6 +204,10 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
  <div class="v3d-stage" id="v3dStage"><div class="v3d-msg" id="v3dMsg">جاري تحميل المجسم…</div><div class="v3d-hint">اسحب بإصبعك لتدوير القطعة، وقرّب بإصبعين</div></div>
  <div class="v3d-ft"><span class="lbl">اللون: <span id="v3dCname"></span></span><div class="sws" id="v3dSws"></div>
   <button type="button" class="btn gold" id="v3dUse">اعتمد هذا اللون</button></div>
+</div></div>
+<div class="modal-bg" id="ibg" hidden><div class="modal" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="it">
+ <button type="button" class="xbtn" id="iclose" aria-label="إغلاق">×</button>
+ <h3 id="it">تطبيق RAX3D</h3><div id="ibody"></div>
 </div></div>
 <div class="shell" dir="rtl">
   <div class="drawer-bg" id="drawerBg"></div><nav class="rail" id="rail" aria-label="الأقسام"></nav>
@@ -273,14 +292,14 @@ function openDrawer(){$("#rail").classList.add("open");$("#drawerBg").classList.
 function closeDrawer(){$("#rail").classList.remove("open");$("#drawerBg").classList.remove("open");$("#menuBtn").setAttribute("aria-expanded","false")}
 document.getElementById("drawerBg").addEventListener("click",closeDrawer);
 function rail(active){
-  $("#rail").innerHTML=`<div class="rail-hd"><b>الأقسام</b><button type="button" id="railClose" aria-label="إغلاق">×</button></div><button type="button" data-home aria-current="${active===null&&hist[hi].v==="home"}"><span class="homeic"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></span>الرئيسية</button>`+
+  $("#rail").innerHTML=`<div class="rail-hd"><b>الأقسام</b><button type="button" id="railClose" aria-label="إغلاق">×</button></div><button type="button" data-home aria-current="${active===null&&hist[hi].v==="home"}"><span class="homeic"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></span>الرئيسية</button>`+(INST.standalone?"":`<button type="button" class="inst" data-inst><img src="icon.svg" alt="">حمّل التطبيق</button>`)+
   CATS.map(c=>`<button type="button" data-cat="${c}" aria-current="${c===active}"><img src="${IMG[ITEMS.find(i=>i.cat===c).id].thumb}" alt="">${c}</button>`).join("");
 }
 const card=i=>`<button type="button" class="item" data-open="${i.id}"><img src="${IMG[i.id].thumb}" alt="${i.name}" loading="lazy"><span class="cap"><b>${i.name}</b><small>${i.use}</small></span></button>`;
 function home(){
-  $("#ttl").innerHTML="<span>RAX3D</span>";
-  $("#main").innerHTML=`<section class="hero"><div class="wm">RAX3D</div><div class="handle">@rax3d.sa</div>
-   <h1>اختر قطعتك، ونطبعها باللون اللي تحبه</h1><p class="lead">اختر القسم، ثم القطعة واللون والعدد. سعر الجملة: ١٢ حبة من نفس القطعة إذا وزنها أقل من ١٠٠ غرام، و٦ حبات إذا وزنها ١٠٠ غرام أو أكثر.</p></section>
+  $("#ttl").innerHTML='<span><img src="icon.svg" alt="">RAX3D</span>';
+  $("#main").innerHTML=`<section class="hero"><img class="mark" src="icon.svg" alt="شعار RAX3D" width="76" height="76"><div class="wm">RAX3D</div><div class="handle">@rax3d.sa</div>
+   <h1>اختر قطعتك، ونطبعها باللون اللي تحبه</h1><p class="lead">اختر القسم، ثم القطعة واللون والعدد. سعر الجملة: ١٢ حبة من نفس القطعة إذا وزنها أقل من ١٠٠ غرام، و٦ حبات إذا وزنها ١٠٠ غرام أو أكثر.</p>${INST.standalone?"":`<button type="button" class="instbtn" data-inst><img src="icon.svg" alt="">حمّل تطبيق RAX3D على جهازك</button>`}</section>
    <h2>الأقسام</h2><div class="cats">${CATS.map(c=>{const f=ITEMS.find(i=>i.cat===c);const n=ITEMS.filter(i=>i.cat===c).length;
    return `<button type="button" class="cat" data-cat="${c}"><img src="${IMG[f.id].thumb}" alt=""><b>${c}</b><small>${n} قطع</small></button>`}).join("")}</div>
    <h2>كل القطع</h2><div class="grid">${ITEMS.map(card).join("")}</div>
@@ -457,5 +476,52 @@ document.addEventListener("input",e=>{
   if(isFinite(v)&&v>0&&v<=MAXD){setDim(i,v);syncDims(i)}else{cur.dim[i]=isFinite(v)?v:null;syncDims(i)}}
 });
 document.addEventListener("input",e=>{if(cur&&e.target.id==="note"){cur.note=e.target.value.slice(0,200);$("#cnt").textContent=cur.note.length}});
+/* ---------- install as an app (PWA): one-tap where the browser allows it, otherwise steps written for the visitor's own browser ---------- */
+const INST={evt:null,standalone:matchMedia("(display-mode: standalone)").matches||navigator.standalone===true};
+const UA=navigator.userAgent,IOS=/iPhone|iPad|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const AND=/Android/.test(UA),MAC=/Macintosh/.test(UA)&&!IOS,WIN=/Windows/.test(UA);
+const BR=/Edg\//.test(UA)?"edge":/SamsungBrowser/.test(UA)?"samsung":/CriOS|Chrome\//.test(UA)?"chrome":/FxiOS|Firefox/.test(UA)?"firefox":/Safari/.test(UA)?"safari":"other";
+const SH='<svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v7h14v-7"/></svg>',DOTS='<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>';
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();INST.evt=e});
+addEventListener("appinstalled",()=>{INST.evt=null;showInstalled()});
+const where=()=>IOS||AND?"على الشاشة الرئيسية لجوالك":MAC?"في الـ Dock وفي مجلد التطبيقات":WIN?"على سطح المكتب وفي قائمة ابدأ":"بين تطبيقات جهازك";
+function stepsFor(){const s=[];
+ if(IOS){
+  if(BR==="safari"){s.push(`اضغط زر المشاركة <span class="k">${SH} مشاركة</span> أسفل الشاشة (أو أعلاها في الآيباد).`);}
+  else s.push(`اضغط زر المشاركة <span class="k">${SH}</span> في شريط المتصفح.`);
+  s.push(`انزل في القائمة واختر <span class="k">إضافة إلى الشاشة الرئيسية</span>.`);
+  s.push(`اضغط <span class="k">إضافة</span> فوق على اليمين.`);
+ }else if(AND){
+  s.push(`اضغط القائمة <span class="k">${DOTS}</span> في أعلى المتصفح.`);
+  s.push(`اختر <span class="k">تثبيت التطبيق</span> أو <span class="k">إضافة إلى الشاشة الرئيسية</span>.`);
+  s.push(`اضغط <span class="k">تثبيت</span> للتأكيد.`);
+ }else if(MAC&&BR==="safari"){
+  s.push(`من شريط القوائم فوق اختر <span class="k">ملف</span> (File).`);
+  s.push(`اختر <span class="k">إضافة إلى Dock</span> (Add to Dock).`);
+  s.push(`اضغط <span class="k">إضافة</span>.`);
+ }else if(BR==="chrome"||BR==="edge"){
+  s.push(`اضغط القائمة <span class="k">${DOTS}</span> في أعلى المتصفح (أو أيقونة التثبيت <span class="k">⊕</span> في طرف شريط العنوان).`);
+  s.push(`اختر <span class="k">${BR==="edge"?"التطبيقات ← تثبيت هذا الموقع كتطبيق":"إرسال وحفظ ومشاركة ← تثبيت الصفحة كتطبيق"}</span>.`);
+  s.push(`اضغط <span class="k">تثبيت</span>.`);
+ }else{
+  s.push(`متصفحك الحالي ما يدعم تثبيت التطبيقات.`);
+  s.push(`افتح هذا الرابط في <b>Chrome</b> أو <b>Edge</b> (أو <b>Safari</b> في الآيفون)، وارجع لهذا الزر.`);
+ }
+ return s}
+function openInstall(){const b=$("#ibody");
+ if(INST.standalone){b.innerHTML=`<p>أنت فاتح التطبيق حالياً ✓</p>`}
+ else if(INST.evt){b.innerHTML=`<p>بضغطة وحدة نثبت لك تطبيق RAX3D ${where()}، ويفتح مثل أي برنامج بدون متصفح.</p><button type="button" class="btn gold" id="igo">ثبّت التطبيق الحين</button><p class="inote">جهازك يعرض عليك نافذة صغيرة، اضغط فيها «تثبيت».</p>`}
+ else{b.innerHTML=`<p>نضيف لك تطبيق RAX3D ${where()} بثلاث خطوات:</p><ol class="ist">${stepsFor().map(x=>`<li><span>${x}</span></li>`).join("")}</ol><p class="inote">التطبيق مجاني وخفيف، ما يحتاج متجر تطبيقات ولا يطلب أي صلاحيات.</p><button type="button" class="btn gold" id="iok">تمام</button>`}
+ $("#ibg").hidden=false}
+function showInstalled(){$("#ibody").innerHTML=`<div class="idone">✅</div><h3 style="text-align:center">تم تحميل التطبيق</h3>
+ <p>لقيته ${where()} باسم <b>RAX3D</b> وبهذا الشعار:</p><p style="text-align:center"><img src="icon.svg" alt="" width="64" height="64" style="border-radius:16px"></p>
+ <ol class="ist"><li><span>جهازك أضاف أيقونة التطبيق ${where()}.</span></li><li><span>اضغطها في أي وقت ويفتح لك المتجر مباشرة كتطبيق مستقل.</span></li><li><span>تبي تحذفه؟ احذف الأيقونة مثل أي تطبيق.</span></li></ol>
+ <button type="button" class="btn gold" id="iok">تمام</button>`;$("#ibg").hidden=false;document.querySelectorAll("[data-inst]").forEach(x=>x.remove())}
+document.addEventListener("click",async e=>{const t=e.target.closest("button");if(!t)return;
+ if(t.hasAttribute("data-inst")){closeDrawer();openInstall()}
+ else if(t.id==="iclose"||t.id==="iok"){$("#ibg").hidden=true}
+ else if(t.id==="igo"&&INST.evt){const ev=INST.evt;INST.evt=null;ev.prompt();const r=await ev.userChoice.catch(()=>null);if(r&&r.outcome==="accepted")showInstalled();else $("#ibg").hidden=true}});
+document.getElementById("ibg").addEventListener("click",e=>{if(e.target.id==="ibg")e.target.hidden=true});
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 render(false);
 </script>
