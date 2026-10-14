@@ -327,7 +327,7 @@ const card=i=>`<button type="button" class="item" data-open="${i.id}"><img src="
 function home(){
   $("#ttl").innerHTML='<span><img src="icon-192.png" alt="">RAX3D</span>';
   $("#main").innerHTML=`<section class="hero"><img class="mark" src="icon-192.png" alt="شعار RAX3D" width="76" height="76"><div class="wm">RAX3D</div><div class="handle">@rax3d.sa</div>
-   <h1>اختر قطعتك، ونطبعها باللون اللي تحبه</h1><p class="lead">اختر القسم، ثم القطعة واللون والعدد. سعر الجملة: 12 حبة من نفس القطعة إذا وزنها أقل من 100 غرام، و6 حبات إذا وزنها 100 غرام أو أكثر.</p>${INST.standalone?"":`<button type="button" class="instbtn" data-inst><img src="icon-192.png" alt="">حمّل تطبيق RAX3D على جهازك</button>`}</section>
+   <h1>اختر قطعتك، ونطبعها باللون اللي تحبه</h1><p class="lead">اختر القسم، ثم القطعة واللون والعدد. سعر الجملة: 12 حبة من نفس القطعة إذا وزنها أقل من 100 غرام، و6 حبات إذا وزنها 100 غرام أو أكثر.</p>${INST.standalone?"":`<button type="button" class="instbtn" data-inst><img src="icon-192.png" alt="">حمّل تطبيق RAX3D على جهازك</button>`}<div style="width:100%;max-width:420px;text-align:start">${accCard()}</div></section>
    <h2>الأقسام</h2><div class="cats">${CATS.map(c=>{const f=ITEMS.find(i=>i.cat===c);const n=ITEMS.filter(i=>i.cat===c).length;
    return `<button type="button" class="cat" data-cat="${c}"><img src="${IMG[f.id].thumb}" alt=""><b>${c}</b><small>${n} قطع</small></button>`}).join("")}</div>
    <h2>كل القطع</h2><div class="grid">${ITEMS.map(card).join("")}</div>
@@ -359,14 +359,15 @@ function itemView(id){
   <button type="button" class="btn gold" data-add>أضف للطلب</button>`;
   qtyUI();prep(id);ownPanel(id);
 }
+function accCard(){return CUST?`<div class="acc on"><div class="row"><span>الطلب باسم <b>${esc(CUST.n)}</b> · <span dir="ltr">${CUST.p}</span></span><button type="button" class="linkbtn" data-acc>تعديل</button></div><span class="pts">⭐ تنضاف لك نقطة ولاء على كل ريال في هذا الطلب</span></div>`
+   :`<div class="acc"><b>سجّل واكسب نقاط ولاء ⭐</b><span class="inote">اسمك وجوالك بس، بدون رقم سري. كل ريال = نقطة، ويوصلنا طلبك جاهز باسمك.</span><button type="button" class="btn alt" data-acc>سجّل الحين (اختياري)</button></div>`}
 function cartView(){
   $("#ttl").textContent="طلبي";
   $("#main").innerHTML=`<h2>طلبي</h2>${cart.length?`<div class="lines">${cart.map((o,i)=>`<div class="line"><img src="${IMG[o.id].thumb}" alt=""><div><b>${o.name}</b><small>${o.color} · ${o.qty} حبة${isW(o)?" · جملة":""}${o.size?" · مقاس "+o.size:""}${o.note?" · "+esc(o.note):""}</small></div><button type="button" data-del="${i}" aria-label="حذف">×</button></div>`).join("")}</div>
-  ${CUST?`<div class="acc on"><div class="row"><span>الطلب باسم <b>${esc(CUST.n)}</b> · <span dir="ltr">${CUST.p}</span></span><button type="button" class="linkbtn" data-acc>تعديل</button></div><span class="pts">⭐ تنضاف لك نقطة ولاء على كل ريال في هذا الطلب</span></div>`
-   :`<div class="acc"><b>سجّل واكسب نقاط ولاء ⭐</b><span class="inote">اسمك وجوالك بس، بدون رقم سري. كل ريال = نقطة، ويوصلنا طلبك جاهز باسمك.</span><button type="button" class="btn alt" data-acc>سجّل الحين (اختياري)</button></div>`}
+  ${accCard()}
   <a class="btn gold dm" href="https://ig.me/m/rax3d.sa" target="_blank" rel="noopener">أرسل الطلب بالخاص</a><button type="button" class="btn alt" id="copy">انسخ الطلب فقط</button>
   <div class="toast" id="toast" aria-live="polite"></div><p class="note">نفتح لك محادثتنا في انستقرام وننسخ طلبك تلقائياً، الصقه في الرسالة وأرسله، ونرد عليك بالسعر.</p>`
-  :`<p class="note">ما أضفت قطع بعد.</p><button type="button" class="btn alt" data-home>تصفح القطع</button>`}`;
+  :accCard()+`<p class="note">ما أضفت قطع بعد.</p><button type="button" class="btn alt" data-home>تصفح القطع</button>`}`;
 }
 const AX=[["X","العرض"],["Y","العمق / الطول"],["Z","الارتفاع"]];
 const fmt=v=>v==null?"—":(Math.round(v*10)/10).toString();

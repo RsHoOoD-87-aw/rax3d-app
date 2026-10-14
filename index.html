@@ -201,7 +201,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
     </div>
     <div class="client grid g2">
       <div><label for="client">اسم العميل</label><input id="client" autocomplete="off"></div>
-      <div><label for="phone">الجوال</label><input id="phone" inputmode="tel" autocomplete="off" style="direction:ltr;text-align:right"><small id="ptsHint" style="color:var(--gold);display:block;margin-top:4px;min-height:1em"></small></div>
+      <div><label for="phone">الجوال</label><input id="phone" inputmode="tel" autocomplete="off" style="direction:ltr;text-align:right"><small id="ptsHint" style="color:var(--gold);display:block;margin-top:4px;min-height:1em">⭐ نقاط الولاء تظهر هنا</small></div>
     </div>
     <div id="items"></div>
     <datalist id="catList"></datalist>
@@ -439,7 +439,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '37';
+const APP_VERSION = '38';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -1274,15 +1274,24 @@ let lastNum = null;
 $('doneSave').onclick = () => { $('done').classList.remove('on'); if (lastNum !== null) savePdf(lastNum); };
 $('doneNew').onclick = () => $('done').classList.remove('on');
 
-function resetForm() { ORDER = null; if ($('ptsHint')) $('ptsHint').textContent = ''; $('client').value = ''; $('phone').value = ''; items = [newItem()]; renderItems(); }
+function resetForm() { ORDER = null; if ($('ptsHint')) $('ptsHint').textContent = '⭐ نقاط الولاء تظهر هنا'; $('client').value = ''; $('phone').value = ''; items = [newItem()]; renderItems(); }
 
+const pts = r => normPhone(r.phone).length >= 9 ? Math.floor(+r.total || 0) : 0;   // نقاط الفاتورة: ريال = نقطة (للفواتير اللي فيها جوال)
+function loyaltyCard() {   // ترتيب العملاء حسب رصيد نقاط الولاء
+  const m = new Map();
+  DATA.log.forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9) return; const c = m.get(ph) || { ph, name: '', pts: 0, n: 0 }; c.pts += pts(r); c.n++; if (r.client) c.name = r.client; m.set(ph, c); });
+  const list = [...m.values()].sort((a, b) => b.pts - a.pts);
+  const total = list.reduce((a, c) => a + c.pts, 0);
+  return `<div class="period"><h3>⭐ نقاط الولاء</h3><div class="kv"><div>العملاء<b>${list.length}</b></div><div>إجمالي النقاط<b>${total}</b></div><div>ريال = نقطة<b>1</b></div></div>
+    ${list.length ? '<div style="margin-top:10px;display:grid;gap:6px">' + list.slice(0, 15).map((c, i) => `<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line,#333);padding-top:6px"><span>${i + 1}. ${esc(c.name || 'بدون اسم')} <small style="color:var(--mute)" dir="ltr">${esc(c.ph)}</small> <small style="color:var(--mute)">· ${c.n} فاتورة</small></span><b style="color:var(--gold)">${c.pts}</b></div>`).join('') + '</div>' : '<p style="color:var(--mute);margin:8px 0 0">النقاط تبدأ لما تحفظ فاتورة فيها رقم جوال العميل.</p>'}</div>`;
+}
 function renderLog() {
   const q = $('q').value.trim().toLowerCase();
   const rows = DATA.log.slice().reverse().filter(r => !q ||
     (r.client + ' ' + r.phone + ' ' + r.num + ' ' + r.desc).toLowerCase().includes(q));
   $('logList').innerHTML = rows.length ? rows.map(r => `
     <div class="row">
-      <div class="row-h"><b>${esc(r.client || 'بدون اسم')}${r.by === 'partner' ? '<span class="tag p">📝 مدخل البيانات</span>' : ''}${r.edited ? '<span class="tag">معدّلة</span>' : ''}</b><span class="amt">${fmt(r.total)} ريال</span></div>
+      <div class="row-h"><b>${esc(r.client || 'بدون اسم')}${r.by === 'partner' ? '<span class="tag p">📝 مدخل البيانات</span>' : ''}${r.edited ? '<span class="tag">معدّلة</span>' : ''}${pts(r) ? '<span class="tag" style="color:var(--gold)">⭐ +' + pts(r) + '</span>' : ''}</b><span class="amt">${fmt(r.total)} ريال</span></div>
       <p>${esc(r.desc)}</p>
       <div class="meta"><span>رقم ${esc(r.num)} &nbsp; ${esc(r.date)}${r.phone ? ' &nbsp; ' + esc(r.phone) : ''}</span>
       <span class="acts"><button class="pdf dl" data-ed="${esc(rk(r))}">✏️ تعديل</button><button class="pdf" data-dl="1" data-num="${esc(rk(r))}">📄 PDF</button></span></div>
@@ -1337,8 +1346,8 @@ function renderStats() {
     return `<div class="period"><h3>${name}</h3><div class="kv">
       <div>الفواتير<b>${rs.length}</b></div><div>القطع<b>${s('qty')}</b></div><div>المبيعات<b>${fmt(s('total'))}</b></div>
       <div>الخصومات<b>${fmt(s('disc'))}</b></div><div>صافي الربح<b>${fmt(s('profit'))}</b></div>
-      <div>متوسط الفاتورة<b>${rs.length ? fmt(s('total') / rs.length) : 0}</b></div></div></div>`;
-  }).join('');
+      <div>متوسط الفاتورة<b>${rs.length ? fmt(s('total') / rs.length) : 0}</b></div><div>⭐ نقاط الولاء<b>${rs.reduce((a, r) => a + pts(r), 0)}</b></div></div></div>`;
+  }).join('') + loyaltyCard();
 }
 
 
@@ -1529,9 +1538,9 @@ $('logList').addEventListener('click', e => {
 // سجل الفواتير (Excel)
 function buildLogXlsx(log, title) {
   const admin = DATA.role === 'admin';
-  const head = ['رقم الفاتورة', 'التاريخ', 'اسم العميل', 'الجوال', 'الوصف', 'العدد', 'الخصم', 'المجموع النهائي'].concat(admin ? ['صافي الربح', 'السعر المقترح'] : []);
-  const rows = log.map(r => [Number(r.num) || r.num, r.date, r.client, r.phone, r.desc, r.qty, r.disc, r.total].concat(admin ? [r.profit, r.sugg || ''] : []));
-  return makeXlsx([{ name: title || 'سجل الفواتير', rows: [head].concat(rows), cols: [11, 12, 20, 14, 40, 8, 10, 14].concat(admin ? [12, 13] : []) }]);
+  const head = ['رقم الفاتورة', 'التاريخ', 'اسم العميل', 'الجوال', 'نقاط الولاء', 'الوصف', 'العدد', 'الخصم', 'المجموع النهائي'].concat(admin ? ['صافي الربح', 'السعر المقترح'] : []);
+  const rows = log.map(r => [Number(r.num) || r.num, r.date, r.client, r.phone, pts(r), r.desc, r.qty, r.disc, r.total].concat(admin ? [r.profit, r.sugg || ''] : []));
+  return makeXlsx([{ name: title || 'سجل الفواتير', rows: [head].concat(rows), cols: [11, 12, 20, 14, 11, 40, 8, 10, 14].concat(admin ? [12, 13] : []) }]);
 }
 $('dlLog').onclick = () => {
   if (!DATA) return;
@@ -1809,7 +1818,7 @@ $('ordGo').onclick = () => { const o = parseOrder($('ordIn').value); if (!o) { $
 $('pcBtn').onclick = openPieces;
 $('pcClose').onclick = () => $('pcSheet').classList.remove('on');
 $('pcList').addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (b) { $('pcSheet').classList.remove('on'); downloadPiece(b.dataset.pc); } });
-function showPts() { const h = $('ptsHint'); if (!h) return; const l = loyalty($('phone').value); h.textContent = l && l.balance ? '⭐ رصيد العميل: ' + l.balance + ' نقطة' : (l ? '⭐ عميل جديد — يبدأ يجمع نقاط من هذي الفاتورة' : ''); }
+function showPts() { const h = $('ptsHint'); if (!h) return; const l = loyalty($('phone').value); h.textContent = l && l.balance ? '⭐ رصيد العميل: ' + l.balance + ' نقطة' : (l ? '⭐ عميل جديد — يبدأ يجمع نقاط من هذي الفاتورة' : '⭐ نقاط الولاء تظهر هنا'); }
 $('phone').addEventListener('input', showPts);
 let LINK = (() => { const p = new URLSearchParams(location.search); return { order: p.get('order'), piece: p.get('piece') }; })();
 if (LINK.order || LINK.piece) try { history.replaceState(null, '', location.pathname); } catch (e) {}
