@@ -29,9 +29,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px
   padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:0 96px}
 button{font:inherit;color:inherit}
 button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.promo{display:block;overflow:hidden;background:var(--ink);color:var(--bg);text-decoration:none;margin-inline:calc(-1 * max(12px,env(safe-area-inset-left,0px)));padding-block:11px;font-size:15.5px;font-weight:600;line-height:1.5;white-space:nowrap}
+.promo{display:block;overflow:hidden;background:#17130e;color:#f6efe4;border-bottom:1px solid rgba(224,177,85,.35);text-decoration:none;margin-inline:calc(-1 * max(12px,env(safe-area-inset-left,0px)));padding-block:11px;font-size:15.5px;font-weight:600;line-height:1.5;white-space:nowrap}
 .promo .track{display:inline-flex;gap:48px;padding-inline:24px;animation:slide 48s linear infinite}
-.promo b{color:var(--accent);font-weight:700}
+.promo b{color:#e8b95a;font-weight:800}
 @keyframes slide{from{transform:translateX(0)}to{transform:translateX(50%)}}
 @media (prefers-reduced-motion:reduce){.promo .track{animation:none}.promo{white-space:normal;text-align:center}}
 .chat{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;width:56px;height:56px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.18);text-decoration:none}
@@ -204,12 +204,11 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
 .v3d-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 6px}
 .v3d-hd b{font-family:var(--display);font-size:17px}
 .v3d-hd button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1;cursor:pointer}
-.pic{position:relative}
-.pic .v3d-stage{position:absolute;inset:0;max-height:none;aspect-ratio:auto;border-radius:inherit;overflow:hidden}
+.pic{position:relative;overflow:hidden;isolation:isolate;border-radius:16px;background:var(--stage)}
+.pic .v3d-stage{position:absolute;inset:0;max-height:none;aspect-ratio:auto;border-radius:inherit;overflow:hidden;background:var(--stage)!important}
 .pictog{position:absolute;top:10px;inset-inline-start:10px;z-index:3;min-width:52px;height:40px;border-radius:12px;border:0;background:rgba(20,14,8,.78);color:#fff;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 .pictog[aria-pressed=true]{background:var(--accent);color:var(--accent-fg)}
-.confirm{position:sticky;bottom:0;z-index:5;display:grid;gap:8px;background:var(--surface);border:1px solid var(--accent);border-radius:16px;padding:12px;box-shadow:0 -6px 18px rgba(0,0,0,.12);margin-top:4px}
-body:has(.confirm) .chat{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.confirm{position:relative;display:grid;gap:8px;background:var(--surface);border:1px solid var(--accent);border-radius:16px;padding:12px;box-shadow:0 -6px 18px rgba(0,0,0,.12);margin-top:4px}
 .confirm span{font-size:13px;color:var(--muted);line-height:1.6}
 .tip3d{font-size:13px;line-height:1.7;color:var(--muted);background:var(--surface);border:1px dashed var(--accent);border-radius:12px;padding:8px 12px;margin:0}
 .v3d-stage{position:relative;width:100%;aspect-ratio:1;max-height:62vh;background:radial-gradient(circle at 50% 40%,#fbf6ee,#e9dccb)}
@@ -465,8 +464,8 @@ function open3D(){
   V.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});V.renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   V.renderer.outputEncoding=THREE.sRGBEncoding;V.renderer.toneMapping=THREE.NoToneMapping;
   V.scene=new THREE.Scene();V.cam=new THREE.PerspectiveCamera(35,1,0.1,5000);
-  V.scene.add(new THREE.HemisphereLight(0xffffff,0x8a7f72,0.55));
-  const k=new THREE.DirectionalLight(0xffffff,1.0);k.position.set(1.2,1.6,1.4);V.scene.add(k);const rim=new THREE.DirectionalLight(0xffffff,0.45);rim.position.set(-1.4,0.4,-1.2);V.scene.add(rim);
+  V.scene.add(new THREE.HemisphereLight(0xffffff,0x8a7f72,0.42));
+  const k=new THREE.DirectionalLight(0xffffff,0.82);k.position.set(1.2,1.6,1.4);V.scene.add(k);const rim=new THREE.DirectionalLight(0xffffff,0.45);rim.position.set(-1.4,0.4,-1.2);V.scene.add(rim);
   const f=new THREE.DirectionalLight(0xfff4e6,0.35);f.position.set(-1.2,0.6,-0.6);V.scene.add(f);
   V.controls=new THREE.OrbitControls(V.cam,V.renderer.domElement);V.controls.enableDamping=true;V.controls.autoRotate=true;V.controls.autoRotateSpeed=1.6;V.controls.enablePan=false;V.controls.minPolarAngle=Math.PI*0.12;V.controls.maxPolarAngle=Math.PI*0.62;
   V.controls.addEventListener("start",()=>{V.controls.autoRotate=false});
