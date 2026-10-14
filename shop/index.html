@@ -328,6 +328,7 @@ const WEIGHT={
  ks3:10,
  ks2:24,
  chips:55,
+ clips:55,
  vase:146,
  vase2:61,
  vase3:16
@@ -337,13 +338,14 @@ const DIM={
  ks3:[39,66,12],
  ks2:[81,62,31],
  chips:[81,222,81],
+ clips:[61,79,57],
  vase:[150,150,150],
  vase2:[143,146,180],
  vase3:[48,48,119]
 };
 const MAXD=255;
 /* 3D models from the print files. file: path published next to the page. keep: names of 3MF parts that keep their own colour (beak, eyes...). Fill as: d1:{file:"models/d1.3mf",keep:["beak","eyes"]} */
-const MODELS={vase:{file:"models/vase.json",grid:true},vase2:{file:"models/vase2.json",grid:true},vase3:{file:"models/vase3.json",grid:true},ks2:{file:"models/ks2.json",grid:true},ks3:{file:"models/ks3.json",grid:true},chips:{file:"models/chips.json",grid:true,keep:["keep"],def:2,rotZ:Math.PI*0.85}};
+const MODELS={vase:{file:"models/vase.json",grid:true},vase2:{file:"models/vase2.json",grid:true},vase3:{file:"models/vase3.json",grid:true},ks2:{file:"models/ks2.json",grid:true},ks3:{file:"models/ks3.json",grid:true},chips:{file:"models/chips.json",grid:true,keep:["keep"],def:2,rotZ:Math.PI*0.85},clips:{file:"models/clips.json",grid:true,def:4}};
 ITEMS.forEach(i=>{if(WEIGHT[i.id])i.g=WEIGHT[i.id];if(DIM[i.id])i.d=DIM[i.id]});
 const CAT_ORDER=["إكسسوارات السيارة","إكسسوارات القهوة","إكسسوارات المكتب","الديكور","ميداليات","سناك وضيافة","ألعاب وصفارات"];
 const CATS=[...new Set(ITEMS.map(i=>i.cat))].sort((a,b)=>CAT_ORDER.indexOf(a)-CAT_ORDER.indexOf(b));
@@ -516,7 +518,7 @@ function set3DColor(i){setTimeout(sumUI,0);if(!COLORS[i][1])return;
 function close3D(){V.on=false;const s=$("#v3dStage");if(s)s.hidden=true;const p=$("#pv");if(p)p.style.visibility="";const b=$("#v3dOpen");if(b){b.setAttribute("aria-pressed","false");b.innerHTML="<span>3D</span>"}}
 /* ---------- owners only: shown on phones that have the RAX3D invoicing app (same site) or after opening /shop/?owner=1 once.
    The box holds no secrets: print time + 3MF live in the private repo and open in the app after the PIN. ---------- */
-const OWNER_FILES=["vase","vase2","vase3","ks2","ks3","chips"];
+const OWNER_FILES=["vase","vase2","vase3","ks2","ks3","chips","clips"];
 try{if(new URLSearchParams(location.search).get("owner")==="1"){localStorage.setItem("rax3d_owner","1");history.replaceState(null,"",location.pathname)}}catch(_){}
 function isOwnerDevice(){try{const d=JSON.parse(localStorage.getItem("rax3d_db")||"null");return !!(d&&d.role)||localStorage.getItem("rax3d_owner")==="1"}catch(_){return false}}
 function ownPanel(id){const box=$("#own");if(!box||!isOwnerDevice())return;
