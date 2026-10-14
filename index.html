@@ -201,7 +201,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
     </div>
     <div class="client grid g2">
       <div><label for="client">اسم العميل</label><input id="client" autocomplete="off"></div>
-      <div><label for="phone">الجوال</label><input id="phone" inputmode="tel" autocomplete="off" style="direction:ltr;text-align:right"></div>
+      <div><label for="phone">الجوال</label><input id="phone" inputmode="tel" autocomplete="off" style="direction:ltr;text-align:right"><small id="ptsHint" style="color:var(--gold);display:block;margin-top:4px;min-height:1em"></small></div>
     </div>
     <div id="items"></div>
     <datalist id="catList"></datalist>
@@ -439,7 +439,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '36';
+const APP_VERSION = '37';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -995,6 +995,14 @@ function getLogo() {
   if (logoImg) return Promise.resolve(logoImg);
   return new Promise(res => { const im = new Image(); im.onload = () => { logoImg = im; res(im); }; im.onerror = () => res(null); im.src = LOGO_SRC; });
 }
+// ===== نقاط الولاء: كل ريال = نقطة، تنحسب من سجل الفواتير حسب رقم جوال العميل =====
+function normPhone(v) { let d = String(v || '').replace(/[٠-٩]/g, c => '٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/\D/g, ''); if (d.startsWith('00966')) d = d.slice(5); else if (d.startsWith('966')) d = d.slice(3); if (d.length === 9 && d[0] === '5') d = '0' + d; return d; }
+function loyalty(phone, r) {   // يرجع { earned: نقاط هذي الفاتورة, balance: الرصيد حتى هذي الفاتورة (أو الحين لو ما فيه فاتورة) }
+  const ph = normPhone(phone); if (ph.length < 9) return null;
+  const log = (loadDb().log || []); let bal = 0;
+  for (const x of log) { if (normPhone(x.phone) === ph) bal += Math.floor(+x.total || 0); if (r && x === r) break; if (r && rk(x) === rk(r)) break; }
+  return { earned: r ? Math.floor(+r.total || 0) : 0, balance: bal };
+}
 function drawInvoice(r, logo) {
   const W = 1240, H = 1754, M = 80, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const c = cv.getContext('2d'), F = '"IBM Plex Sans Arabic","Geeza Pro",Tahoma,Arial,sans-serif';
@@ -1049,6 +1057,8 @@ function drawInvoice(r, logo) {
   y += 40; const tw = 420, tl = 210;
   const rows = [['المجموع', money(r.sub || (r.total + r.disc)), '#F1ECE0'], ['الخصومات', money(r.disc), '#F1ECE0'], ['المجموع النهائي', money(r.total), '#111']];
   box(M + tw + 20, y, R - M - tw - 20, rh * 3); txt('ملاحظات:', R - 14, y + 26, { c: '#999', s: 21 });
+  const lp = r.phone ? loyalty(r.phone, r) : null;
+  if (lp) { txt('⭐ نقاط الولاء من هذي الفاتورة: \u2066+' + lp.earned + '\u2069', R - 14, y + 72, { w: 700, s: 24, c: GOLD }); txt('رصيدك الحالي: ' + lp.balance + ' نقطة', R - 14, y + 112, { s: 23 }); }
   rows.forEach(([l, v, f], k) => {
     const last = k === 2;
     box(M + tw - tl, y, tl, rh, f); txt(l, M + tw - tl / 2, y + rh / 2, { a: 'center', w: 700, c: last ? GOLDL : INK });
@@ -1264,7 +1274,7 @@ let lastNum = null;
 $('doneSave').onclick = () => { $('done').classList.remove('on'); if (lastNum !== null) savePdf(lastNum); };
 $('doneNew').onclick = () => $('done').classList.remove('on');
 
-function resetForm() { ORDER = null; $('client').value = ''; $('phone').value = ''; items = [newItem()]; renderItems(); }
+function resetForm() { ORDER = null; if ($('ptsHint')) $('ptsHint').textContent = ''; $('client').value = ''; $('phone').value = ''; items = [newItem()]; renderItems(); }
 
 function renderLog() {
   const q = $('q').value.trim().toLowerCase();
@@ -1492,7 +1502,7 @@ $('fileClose').onclick = () => $('fileSheet').classList.remove('on');
 
 function invFields(r) {
   return { 'رقم الفاتورة': r.num, 'التاريخ': r.date, 'العميل': r.client || '—', 'الجوال': r.phone || '—', 'القطع': r.desc,
-    'الخصم': fmt(r.disc) + ' ريال', 'المجموع': fmt(r.total) + ' ريال', 'صافي الربح': fmt(r.profit) + ' ريال', 'أنشأها': r.by === 'partner' ? 'مدخل البيانات' : 'الدعم الفني' };
+    'الخصم': fmt(r.disc) + ' ريال', 'المجموع': fmt(r.total) + ' ريال', 'نقاط الولاء': (l => l ? '+' + l.earned + ' (الرصيد ' + l.balance + ')' : '—')(r.phone ? loyalty(r.phone, r) : null), 'صافي الربح': fmt(r.profit) + ' ريال', 'أنشأها': r.by === 'partner' ? 'مدخل البيانات' : 'الدعم الفني' };
 }
 function mailInvoice(id, kind) {
   if (loadDb().role !== 'admin') return;
@@ -1753,6 +1763,7 @@ async function fillFromOrder(o) {
       w: info && info.weight ? info.weight : (g || ''), h: info ? info.h || '' : '', m: info ? info.m || '' : '', sec: info ? info.sec || '' : '', pid: id, pinfo: !!info }));
   }
   items = out.length ? out : [newItem()]; ORDER = { o, at: Date.now() }; renderItems();
+  if (Array.isArray(o.c)) { $('client').value = String(o.c[0] || '').slice(0, 60); $('phone').value = normPhone(o.c[1]); showPts(); }
   const miss = out.filter(it => !it.pinfo).length;
   toast(miss ? '✅ انعبت الفاتورة — ' + miss + ' قطعة بدون وقت طباعة، كمّله يدوي' : '✅ انعبت الفاتورة من طلب الموقع');
   document.querySelector('nav button[data-tab="new"]').click();
@@ -1798,6 +1809,8 @@ $('ordGo').onclick = () => { const o = parseOrder($('ordIn').value); if (!o) { $
 $('pcBtn').onclick = openPieces;
 $('pcClose').onclick = () => $('pcSheet').classList.remove('on');
 $('pcList').addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (b) { $('pcSheet').classList.remove('on'); downloadPiece(b.dataset.pc); } });
+function showPts() { const h = $('ptsHint'); if (!h) return; const l = loyalty($('phone').value); h.textContent = l && l.balance ? '⭐ رصيد العميل: ' + l.balance + ' نقطة' : (l ? '⭐ عميل جديد — يبدأ يجمع نقاط من هذي الفاتورة' : ''); }
+$('phone').addEventListener('input', showPts);
 let LINK = (() => { const p = new URLSearchParams(location.search); return { order: p.get('order'), piece: p.get('piece') }; })();
 if (LINK.order || LINK.piece) try { history.replaceState(null, '', location.pathname); } catch (e) {}
 function handleLinks() {   // تنفذ مرة وحدة بعد الدخول بالرمز
