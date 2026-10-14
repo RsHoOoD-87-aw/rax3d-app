@@ -327,6 +327,7 @@ const ITEMS=[
 const WEIGHT={
  ks3:10,
  ks2:24,
+ chips:55,
  vase:146,
  vase2:61,
  vase3:16
@@ -335,13 +336,14 @@ const WEIGHT={
 const DIM={
  ks3:[39,66,12],
  ks2:[81,62,31],
+ chips:[81,222,81],
  vase:[150,150,150],
  vase2:[143,146,180],
  vase3:[48,48,119]
 };
 const MAXD=255;
 /* 3D models from the print files. file: path published next to the page. keep: names of 3MF parts that keep their own colour (beak, eyes...). Fill as: d1:{file:"models/d1.3mf",keep:["beak","eyes"]} */
-const MODELS={vase:{file:"models/vase.json",grid:true},vase2:{file:"models/vase2.json",grid:true},vase3:{file:"models/vase3.json",grid:true},ks2:{file:"models/ks2.json",grid:true},ks3:{file:"models/ks3.json",grid:true}};
+const MODELS={vase:{file:"models/vase.json",grid:true},vase2:{file:"models/vase2.json",grid:true},vase3:{file:"models/vase3.json",grid:true},ks2:{file:"models/ks2.json",grid:true},ks3:{file:"models/ks3.json",grid:true},chips:{file:"models/chips.json",grid:true,keep:["keep"],def:2,rotZ:Math.PI*0.85}};
 ITEMS.forEach(i=>{if(WEIGHT[i.id])i.g=WEIGHT[i.id];if(DIM[i.id])i.d=DIM[i.id]});
 const CAT_ORDER=["إكسسوارات السيارة","إكسسوارات القهوة","إكسسوارات المكتب","الديكور","ميداليات","سناك وضيافة","ألعاب وصفارات"];
 const CATS=[...new Set(ITEMS.map(i=>i.cat))].sort((a,b)=>CAT_ORDER.indexOf(a)-CAT_ORDER.indexOf(b));
@@ -458,7 +460,7 @@ function open3D(){
  if(!window.THREE||!cur)return;const m=MODELS[cur.it.id];if(!m)return;
  const st0=$("#v3dStage");if(!st0)return;if(V.on&&V.id===cur.it.id&&!st0.hidden){close3D();return}
  st0.hidden=false;$("#pv").style.visibility="hidden";V.on=true;$("#v3dOpen").setAttribute("aria-pressed","true");$("#v3dOpen").innerHTML="<span>📷</span>";
- const ci=cur.color&&!OUT.has(cur.color)?cur.color:1;
+ const ci=cur.color&&!OUT.has(cur.color)?cur.color:(m.def||1);
  const st=$("#v3dStage");
  if(!V.renderer){
   V.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});V.renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -485,18 +487,20 @@ function open3D(){
    o.material=new THREE.MeshStandardMaterial({color:old,roughness:0.5,metalness:0.0,side:THREE.DoubleSide,vertexColors:!!(o.geometry.attributes.color&&keep)});
    if(!keep)V.tint.push(o.material)});
   if(!V.tint.length)obj.traverse(o=>{if(o.isMesh)V.tint.push(o.material)});
-  obj.rotation.x=-Math.PI/2;/* print files are Z-up */
+  obj.rotation.x=-Math.PI/2;if(m.rotZ)obj.rotation.z=m.rotZ;/* print files are Z-up */
   const box=new THREE.Box3().setFromObject(obj),c=box.getCenter(new THREE.Vector3()),s=box.getSize(new THREE.Vector3());
   obj.position.sub(c);obj.position.y+=s.y*0.0;const d=Math.max(s.x,s.y,s.z);
   V.cam.position.set(d*1.45,d*0.95,d*1.85);V.cam.near=d/100;V.cam.far=d*20;V.cam.updateProjectionMatrix();V.controls.target.set(0,0,0);V.controls.autoRotate=true;
   V.scene.add(obj);set3DColor(ci);$("#v3dMsg").hidden=true};
  const fail=()=>{$("#v3dMsg").textContent="ما قدرنا نحمّل المجسم، جرّب مرة ثانية."};
- if(m.grid)fetch(m.file).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>done(new THREE.Mesh(ringGrid(d),new THREE.MeshStandardMaterial()))).catch(fail);
+ if(m.grid)fetch(m.file).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{const g=ringGrid(d);done(g.isObject3D?g:new THREE.Mesh(g,new THREE.MeshStandardMaterial()))}).catch(fail);
  else if(/\.stl$/i.test(m.file))new THREE.STLLoader().load(m.file,g=>{const g2=g;done(new THREE.Mesh(g2,new THREE.MeshStandardMaterial()))},undefined,fail);
  else new THREE.ThreeMFLoader().load(m.file,done,undefined,fail);
 }
 /* ring-grid model: rings of n points (int16, 0.01 mm), Z-up, bottom capped, top open */
-function meshJson(d){const dec=s=>{const r=atob(s),b=new Uint8Array(r.length);for(let i=0;i<r.length;i++)b[i]=r.charCodeAt(i);return b.buffer};
+function meshJson(d){if(d.keep){   /* two-colour print: main body follows the chosen colour, "keep" faces (e.g. white text) stay as printed */
+  const grp=new THREE.Group(),a=meshJson(Object.assign({},d,{keep:null})),b=meshJson(Object.assign({},d,{keep:null,idx:d.keep}));
+  grp.add(new THREE.Mesh(a,new THREE.MeshStandardMaterial()));const km=new THREE.Mesh(b,new THREE.MeshStandardMaterial({color:new THREE.Color(d.keepColor||"#ffffff")}));km.name="keep";grp.add(km);return grp}const dec=s=>{const r=atob(s),b=new Uint8Array(r.length);for(let i=0;i<r.length;i++)b[i]=r.charCodeAt(i);return b.buffer};
  const q=new Int16Array(dec(d.pos)),ix=new Uint16Array(dec(d.idx)),pos=new Float32Array(q.length);for(let i=0;i<q.length;i++)pos[i]=q[i]*d.scale;
  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.setIndex(new THREE.BufferAttribute(new Uint32Array(ix),1));return g.toNonIndexed()}
 function ringGrid(d){if(d.type==="mesh")return meshJson(d);const raw=atob(d.pos),b=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)b[i]=raw.charCodeAt(i);
@@ -512,7 +516,7 @@ function set3DColor(i){setTimeout(sumUI,0);if(!COLORS[i][1])return;
 function close3D(){V.on=false;const s=$("#v3dStage");if(s)s.hidden=true;const p=$("#pv");if(p)p.style.visibility="";const b=$("#v3dOpen");if(b){b.setAttribute("aria-pressed","false");b.innerHTML="<span>3D</span>"}}
 /* ---------- owners only: shown on phones that have the RAX3D invoicing app (same site) or after opening /shop/?owner=1 once.
    The box holds no secrets: print time + 3MF live in the private repo and open in the app after the PIN. ---------- */
-const OWNER_FILES=["vase","vase2","vase3","ks2","ks3"];
+const OWNER_FILES=["vase","vase2","vase3","ks2","ks3","chips"];
 try{if(new URLSearchParams(location.search).get("owner")==="1"){localStorage.setItem("rax3d_owner","1");history.replaceState(null,"",location.pathname)}}catch(_){}
 function isOwnerDevice(){try{const d=JSON.parse(localStorage.getItem("rax3d_db")||"null");return !!(d&&d.role)||localStorage.getItem("rax3d_owner")==="1"}catch(_){return false}}
 function ownPanel(id){const box=$("#own");if(!box||!isOwnerDevice())return;
