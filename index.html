@@ -145,7 +145,11 @@ input[type=number]{direction:ltr;text-align:center}
 .st th{color:var(--gold);font-weight:500;text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
 .st td{padding:6px 4px;border-bottom:1px solid #1b1b1b;direction:rtl}
 .st td:not(:first-child),.st th:not(:first-child){text-align:center}
-.sheet .box{max-height:90vh;overflow-y:auto;text-align:right}
+.sheet .box{max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;text-align:right}
+.sheet{overscroll-behavior:contain;touch-action:pan-y}
+html.lock,html.lock body{overflow:hidden;overscroll-behavior:none}
+#pcSearch{width:100%;margin:6px 0}
+.sheet [hidden]{display:none!important}
 .sheet h2,.sheet .tot{text-align:center}
 .lock{overflow-y:auto}
 textarea{width:100%;background:var(--field);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px;color:var(--text);font:inherit;font-size:15px;resize:vertical}
@@ -345,7 +349,9 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="sheet" id="pcSheet"><div class="box">
   <h2>🖨️ ملفات الطباعة</h2>
   <p style="color:var(--mute);font-size:14px;margin:6px 0">الملفات محفوظة في المستودع الخاص، وما تنفتح إلا من البرنامج.</p>
+  <input id="pcSearch" type="search" placeholder="🔎 ابحث باسم القطعة" autocomplete="off">
   <div id="pcList" style="display:grid;gap:8px;margin:8px 0"></div>
+  <button class="ghost" id="pcAll" type="button" hidden>📂 عرض كل الملفات</button>
   <button class="ghost" id="pcClose">إغلاق</button>
 </div></div>
 
@@ -444,7 +450,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '42';
+const APP_VERSION = '43';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -1829,15 +1835,26 @@ async function downloadPiece(id) {
     $('fileMsg').textContent = name + ' · ⏱ ' + info.h + ' س ' + info.m + ' د · ⚖️ ' + info.weight + ' غ' + (info.settings ? ' · ' + info.settings : '');
   } catch (e) { $('fileMsg').textContent = 'تعذّر التحميل: ' + ((e && e.message) || e); $('fileGo').textContent = 'غير متاح'; }
 }
+let PC_LIST = [];
+function pcRender(list) { const box = $('pcList');
+  box.innerHTML = list.length ? list.map(i => `<button class="add" type="button" data-pc="${esc(i.id)}" style="text-align:right">⬇️ ${esc(i.name)}<br><small style="color:var(--mute)">⏱ ${i.h} س ${i.m} د · ⚖️ ${i.weight} غ · ${esc(i.size || '')}</small></button>`).join('') : '<p style="color:var(--mute)">ما فيه ملف بهذا الاسم</p>'; }
+function pcNorm(s) { return String(s || '').replace(/[ً-ْ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim(); }
 async function openPieces() {
   $('pcSheet').classList.add('on'); const box = $('pcList'); box.innerHTML = '<p style="color:var(--mute)">جاري التحميل…</p>';
+  $('pcSearch').value = ''; $('pcAll').hidden = true; $('pcSearch').hidden = true;
   const sync = getSync(); if (!sync) { box.innerHTML = '<p class="err">الجوال غير مربوط بالمستودع</p>'; return; }
   try {
-    const idx = (await readJson(sync, 'files/index.json', { pieces: [] })).data, list = [];
-    for (const id of (idx.pieces || [])) { const i = await pieceInfo(id); if (i) list.push(i); }
-    box.innerHTML = list.length ? list.map(i => `<button class="add" type="button" data-pc="${esc(i.id)}" style="text-align:right">⬇️ ${esc(i.name)}<br><small style="color:var(--mute)">⏱ ${i.h} س ${i.m} د · ⚖️ ${i.weight} غ · ${esc(i.size || '')}</small></button>`).join('') : '<p style="color:var(--mute)">ما فيه ملفات بعد</p>';
+    const idx = (await readJson(sync, 'files/index.json', { pieces: [] })).data;
+    PC_LIST = (await Promise.all((idx.pieces || []).map(pieceInfo))).filter(Boolean);
+    // القطع اللي في الفاتورة الحالية فقط (بالكود من طلب الموقع، أو باسم القطعة المكتوب)
+    const descs = (typeof items !== 'undefined' ? items : []).map(it => pcNorm(it.desc)), pids = new Set((typeof items !== 'undefined' ? items : []).map(it => it.pid).filter(Boolean));
+    const mine = PC_LIST.filter(i => pids.has(i.id) || descs.some(d => d && (d === pcNorm(i.name) || d.startsWith(pcNorm(i.name) + ' '))));
+    if (mine.length) { pcRender(mine); $('pcAll').hidden = false; }
+    else { $('pcSearch').hidden = false; pcRender(PC_LIST); }
   } catch (e) { box.innerHTML = '<p class="err">' + esc((e && e.message) || e) + '</p>'; }
 }
+$('pcAll').onclick = () => { $('pcAll').hidden = true; $('pcSearch').hidden = false; pcRender(PC_LIST); $('pcSearch').focus(); };
+$('pcSearch').addEventListener('input', () => { const q = pcNorm($('pcSearch').value); pcRender(q ? PC_LIST.filter(i => pcNorm(i.name).includes(q)) : PC_LIST); });
 function mailOrderFiles(num) {   // بعد حفظ فاتورة جاية من الموقع: إيميل بالقطع وروابط ملفات الطباعة
   if (!ORDER) return; const o = ORDER.o; ORDER = null;
   const lines = o.i.map(x => '• ' + x[1] + ' [' + x[0] + '] — ' + (x[2] || '') + ' × ' + x[3] + (x[5] ? ' — مقاس ' + x[5] : '') + (x[6] ? ' — ملاحظة: ' + x[6] : ''));
@@ -1851,6 +1868,7 @@ $('ordClose').onclick = () => $('ordSheet').classList.remove('on');
 $('ordGo').onclick = async () => { const v = $('ordIn').value, o = parseMsg(v, await catalog()) || (await parseCode(v)) || parseOrder(v); if (!o) { $('ordErr').textContent = 'ما لقينا كود طلب صحيح — تأكد إنك نسخت الكود كامل'; return; }
   $('ordSheet').classList.remove('on'); fillFromOrder(o); };
 $('pcBtn').onclick = openPieces;
+new MutationObserver(() => document.documentElement.classList.toggle('lock', !!document.querySelector('.sheet.on'))).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
 $('pcClose').onclick = () => $('pcSheet').classList.remove('on');
 $('pcList').addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (b) { $('pcSheet').classList.remove('on'); downloadPiece(b.dataset.pc); } });
 function showPts() { const h = $('ptsHint'); if (!h) return; const l = loyalty($('phone').value); h.textContent = l && l.balance ? '⭐ رصيد العميل: ' + l.balance + ' نقطة' : (l ? '⭐ عميل جديد — يبدأ يجمع نقاط من هذي الفاتورة' : '⭐ نقاط الولاء تظهر هنا'); }
