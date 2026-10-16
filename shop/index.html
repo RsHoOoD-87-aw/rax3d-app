@@ -216,7 +216,7 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
 .v3d-msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;text-align:center;padding:20px}
 .v3d-hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:12px;color:#7a6c5c;pointer-events:none}
 .v3d-ft{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
-.price{display:flex;flex-direction:column;gap:4px;margin:10px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.price b{font-size:1.25rem;color:var(--accent)}.price span{font-size:.9rem;color:var(--muted)}.item .pr{display:block;font-style:normal;font-weight:700;color:var(--accent);margin-top:2px}.line .pr{font-style:normal;font-weight:700;color:var(--accent);white-space:nowrap;margin-inline:6px}#sumPrice{display:block;margin:6px 0;color:var(--accent);font-size:1.1rem}.total{font-weight:800;font-size:1.2rem;text-align:center;color:var(--accent);margin:8px 0}
+.price{display:flex;flex-direction:column;gap:4px;margin:10px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.old{color:var(--muted);font-weight:500;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:#d9534f;opacity:.8;margin-inline-end:6px}.price .old{font-size:1.05rem;order:-1}.price b{font-size:1.25rem;color:var(--accent)}.price span{font-size:.9rem;color:var(--muted)}.item .pr{display:block;font-style:normal;font-weight:700;color:var(--accent);margin-top:2px}.line .pr{font-style:normal;font-weight:700;color:var(--accent);white-space:nowrap;margin-inline:6px}#sumPrice{display:block;margin:6px 0;color:var(--accent);font-size:1.1rem}.total{font-weight:800;font-size:1.2rem;text-align:center;color:var(--accent);margin:8px 0}
 </style>
 
 <a class="promo" href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener" dir="rtl" aria-label="تابعنا على انستقرام واحصل على خصم">
@@ -292,7 +292,8 @@ const COLORS=[["كما بالصورة",null],["أبيض","#f3f1ec"],["أسود",
 const OUT=new Set([9]); /* colours not in stock right now (9 = purple) */
 const DUCK="تعليقة سيارة أو ديكور طبلون", KS="ميدالية مفاتيح وستاند جوال", XB="إكسسوار مكينة xBloom";
 /* PRICES:START — generated from the invoicing-app formula (print file weight + time, shared settings). [single, wholesale(=set)] */
-const PRICE={"abst":[138,107],"chips":[57,45],"clips":[62,48],"ghost":[117,91],"ks1":[23,18],"ks2":[27,21],"ks3":[22,17],"monk":[116,90],"pringles":[67,52],"vase":[117,91],"vase2":[59,46],"vase3":[27,21],"w2":[37,29],"w3":[75,59],"w4":[23,18],"w5":[40,31]};
+const PRICE={"abst":[138,107],"chips":[30,24],"clips":[62,48],"ghost":[117,91],"ks1":[23,18],"ks2":[27,21],"ks3":[22,17],"monk":[116,90],"pringles":[67,52],"vase":[117,91],"vase2":[59,46],"vase3":[27,21],"w2":[37,29],"w3":[75,59],"w4":[23,18],"w5":[40,31]};
+const OLD={"chips":57};
 /* PRICES:END */
 const ITEMS=[
  {id:"d1",cat:"إكسسوارات السيارة",name:"البطة المصدومة",use:DUCK},
@@ -384,7 +385,7 @@ function rail(active){
   $("#rail").innerHTML=`<div class="rail-hd"><b>الأقسام</b><button type="button" id="railClose" aria-label="إغلاق">×</button></div><button type="button" data-home aria-current="${active===null&&hist[hi].v==="home"}"><span class="homeic"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></span>الرئيسية</button>`+`<button type="button" class="inst" data-acc>👤 ${CUST?esc(CUST.n):"سجّل واكسب نقاط"}</button>`+(INST.standalone?"":`<button type="button" class="inst" data-inst><img src="icon-192.png" alt="">حمّل التطبيق</button>`)+
   CATS.map(c=>`<button type="button" data-cat="${c}" aria-current="${c===active}"><img src="${IMG[ITEMS.find(i=>i.cat===c).id].thumb}" alt="">${c}</button>`).join("");
 }
-const card=i=>`<button type="button" class="item" data-open="${i.id}"><img src="${IMG[i.id].thumb}" alt="${i.name}" loading="lazy"><span class="cap"><b>${i.name}</b><small>${i.use}</small>${PRICE[i.id]?`<em class="pr">${SAR(PRICE[i.id][0])}</em>`:""}</span></button>`;
+const card=i=>`<button type="button" class="item" data-open="${i.id}"><img src="${IMG[i.id].thumb}" alt="${i.name}" loading="lazy"><span class="cap"><b>${i.name}</b><small>${i.use}</small>${PRICE[i.id]?`<em class="pr">${OLD[i.id]?`<s class="old">${SAR(OLD[i.id])}</s> `:""}${SAR(PRICE[i.id][0])}</em>`:""}</span></button>`;
 function home(){
   $("#ttl").innerHTML='<span><img src="icon-192.png" alt="">RAX3D</span>';
   $("#main").innerHTML=`<section class="hero"><img class="mark" src="icon-192.png" alt="شعار RAX3D" width="76" height="76">
@@ -411,7 +412,7 @@ function itemView(id){   /* the piece page: photo + details only. Editing happen
   <div class="dims"><div class="dims-hd"><b>المقاسات الأصلية</b><button type="button" class="help" id="helpBtn">مم ← سم؟</button></div>
    <div class="axes">${AX.map((a,i)=>`<div class="ax"><span class="k">${a[0]}</span><small>${a[1]}</small><span class="v">${it.d?it.d[i]+" مم":"—"}</span><span class="cm">${it.d?cm(it.d[i])+" سم":"يُضاف قريباً"}</span></div>`).join("")}</div>
    <div class="dims-row"><span>الوزن: ${it.g?`<span class="num">${it.g}</span> غرام`:"يُضاف قريباً"}</span><span>القسم: ${it.cat}</span></div></div>
-  <div class="price">${PRICE[it.id]?`<b>السعر: ${PRICE[it.id][0]} ريال</b><span>الجملة: ${PRICE[it.id][1]} ريال للحبة من ${WQ(it.id)} حبة</span>`:`<b>السعر بالخاص</b>`}</div>
+  <div class="price">${PRICE[it.id]?`<b>السعر: ${PRICE[it.id][0]} ريال</b>${OLD[it.id]?`<s class="old">${OLD[it.id]} ريال</s>`:""}<span>الجملة: ${PRICE[it.id][1]} ريال للحبة من ${WQ(it.id)} حبة</span>`:`<b>السعر بالخاص</b>`}</div>
   <p class="note">متوفرة بـ ${COLORS.length-1-OUT.size} لون، وتقدر تعدّل مقاسها حتى ${MAXD} مم.</p>
   <div class="own" id="own" hidden></div>
   <button type="button" class="btn gold" data-edit="${it.id}">${MODELS[it.id]?"🧊 خصّصها وشوفها ثلاثية الأبعاد":"🎨 اختر اللون والمقاس والعدد"}</button>`;
