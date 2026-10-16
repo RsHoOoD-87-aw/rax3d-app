@@ -523,7 +523,7 @@ function ringGrid(d){if(d.type==="mesh")return meshJson(d);const raw=atob(d.pos)
 function set3DColor(i){setTimeout(sumUI,0);if(!COLORS[i][1])return;
  const c=new THREE.Color(COLORS[i][1]).convertSRGBToLinear();(V.tint||[]).forEach(mt=>mt.color.copy(c));
  document.querySelectorAll("#v3dSws .sw").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.c3===i));$("#v3dCname")&&($("#v3dCname").textContent=COLORS[i][0]);
- if(cur){cur.color=i;document.querySelectorAll("#main .sw").forEach((b,j)=>b.setAttribute("aria-pressed",j===i));if($("#cname"))$("#cname").textContent=COLORS[i][0];paint()}}
+ if(cur){cur.color=i;document.querySelectorAll("#main .sw").forEach((b,j)=>b.setAttribute("aria-pressed",j===i));if($("#cname"))$("#cname").textContent=COLORS[i][0];paint();const s3=document.getElementById("v3dStage")&&!document.getElementById("v3dStage").hidden?document.getElementById("v3dStage"):document.getElementById("pv");if(s3){const r3=s3.getBoundingClientRect(),hd=70;if(r3.top<hd||r3.bottom>innerHeight)window.scrollBy({top:r3.top-hd,behavior:"smooth"})}}}
 function close3D(){V.on=false;const s=$("#v3dStage");if(s)s.hidden=true;const p=$("#pv");if(p)p.style.visibility="";const b=$("#v3dOpen");if(b){b.setAttribute("aria-pressed","false");b.innerHTML="<span>3D</span>"}}
 /* ---------- owners only: shown on phones that have the RAX3D invoicing app (same site) or after opening /shop/?owner=1 once.
    The box holds no secrets: print time + 3MF live in the private repo and open in the app after the PIN. ---------- */
