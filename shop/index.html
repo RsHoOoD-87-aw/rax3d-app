@@ -219,6 +219,7 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
 .v3d-hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:12px;color:#7a6c5c;pointer-events:none}
 .v3d-ft{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
 .price{display:flex;flex-direction:column;gap:4px;margin:10px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.old{color:var(--muted);font-weight:500;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:#d9534f;opacity:.8;margin-inline-end:6px}.price .old{font-size:1.05rem;order:-1}.price b{font-size:1.25rem;color:var(--accent)}.price span{font-size:.9rem;color:var(--muted)}.item .pr{display:block;font-style:normal;font-weight:700;color:var(--accent);margin-top:2px}.line .pr{font-style:normal;font-weight:700;color:var(--accent);white-space:nowrap;margin-inline:6px}#sumPrice{display:block;margin:6px 0;color:var(--accent);font-size:1.1rem}.total{font-weight:800;font-size:1.2rem;text-align:center;color:var(--accent);margin:8px 0}
+.ptsbox{margin:10px 0;padding:10px 12px;border:1px solid var(--gold,#c9a24b);border-radius:12px;font-weight:700;text-align:center}
 </style>
 
 <a class="promo" href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener" dir="rtl" aria-label="تابعنا على انستقرام واحصل على خصم">
@@ -255,6 +256,7 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
  <p class="inote">سجّل باسمك وجوالك بدون رقم سري، ويوصلنا طلبك جاهز باسمك. وكل ريال تشتري فيه يعطيك نقطة ولاء ⭐</p>
  <label class="flab" for="cn">الاسم</label><input class="fin" id="cn" autocomplete="name" maxlength="40">
  <label class="flab" for="cp">رقم الجوال</label><input class="fin" id="cp" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="05xxxxxxxx" dir="ltr">
+ <div class="ptsbox" id="ptsbox" data-pts hidden></div>
  <div class="dmsg" id="amsg" aria-live="polite"></div>
  <button type="button" class="btn gold" id="asave">حفظ</button>
  <button type="button" class="btn alt" id="aout" hidden>تسجيل الخروج</button>
@@ -387,7 +389,7 @@ function openDrawer(){$("#rail").classList.add("open");$("#drawerBg").classList.
 function closeDrawer(){$("#rail").classList.remove("open");$("#drawerBg").classList.remove("open");$("#menuBtn").setAttribute("aria-expanded","false")}
 document.getElementById("drawerBg").addEventListener("click",closeDrawer);
 function rail(active){
-  $("#rail").innerHTML=`<div class="rail-hd"><b>الأقسام</b><button type="button" id="railClose" aria-label="إغلاق">×</button></div><button type="button" data-home aria-current="${active===null&&hist[hi].v==="home"}"><span class="homeic"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></span>الرئيسية</button>`+`<button type="button" class="inst" data-acc>👤 ${CUST?esc(CUST.n):"سجّل واكسب نقاط"}</button>`+(CUST?`<button type="button" class="inst" data-favs>❤️ <span>مفضلتي</span> <span>(${favs().length})</span></button>`:"")+(INST.standalone?"":`<button type="button" class="inst" data-inst><img src="icon-192.png" alt="">حمّل التطبيق</button>`)+
+  $("#rail").innerHTML=`<div class="rail-hd"><b>الأقسام</b><button type="button" id="railClose" aria-label="إغلاق">×</button></div><button type="button" data-home aria-current="${active===null&&hist[hi].v==="home"}"><span class="homeic"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></span>الرئيسية</button>`+`<button type="button" class="inst" data-acc>👤 ${CUST?esc(CUST.n):"سجّل واكسب نقاط"}${CUST?`<span data-ptsn>${PTS==null?"":" · ⭐ "+PTS}</span>`:""}</button>`+(CUST?`<button type="button" class="inst" data-favs>❤️ <span>مفضلتي</span> <span>(${favs().length})</span></button>`:"")+(INST.standalone?"":`<button type="button" class="inst" data-inst><img src="icon-192.png" alt="">حمّل التطبيق</button>`)+
   CATS.map(c=>`<button type="button" data-cat="${c}" aria-current="${c===active}"><img src="${IMG[ITEMS.find(i=>i.cat===c).id].thumb}" alt="">${c}</button>`).join("");
 }
 const card=i=>`<button type="button" class="item" data-open="${i.id}">${CUST?`<span class="fv" role="button" data-fav="${i.id}" aria-label="المفضلة">${isFav(i.id)?"♥":"♡"}</span>`:""}<img src="${IMG[i.id].thumb}" alt="${i.name}" loading="lazy"><span class="cap"><b>${i.name}</b><small>${i.use}</small>${PRICE[i.id]?`<em class="pr">${OLD[i.id]?`<s class="old">${SAR(OLD[i.id])}</s> `:""}${SAR(PRICE[i.id][0])}</em>`:""}</span></button>`;
@@ -447,7 +449,7 @@ function editView(id){   /* customise page: preview (3D when available) + colour
 }
 function sumUI(){const s=$("#sumLine");if(!s||!cur)return;const sz=cur.sizeOn&&dimsValid()?cur.dim.map(fmt).join(" × ")+" مم":(cur.it.d?cur.it.d.join(" × ")+" مم (الأصلي)":"المقاس الأصلي");
  s.textContent=`اللون: ${COLORS[cur.color][0]} · المقاس: ${sz} · العدد: ${cur.qty}${cur.qty>=WQ(cur.it.id)?" (جملة)":""}`;const sp=$("#sumPrice");if(sp){const u=UP(cur.it.id,cur.qty);sp.textContent=u?`الإجمالي: ${u*cur.qty} ريال`+(cur.sizeOn?" (للمقاس الأصلي)":""):""}}
-function accCard(){return CUST?`<div class="acc on"><div class="row"><span>الطلب باسم <b>${esc(CUST.n)}</b> · <span dir="ltr">${CUST.p}</span></span><button type="button" class="linkbtn" data-acc>تعديل</button></div><span class="pts">⭐ تنضاف لك نقطة ولاء على كل ريال في هذا الطلب</span><button type="button" class="linkbtn" data-favs>❤️ مفضلتي</button></div>`
+function accCard(){return CUST?`<div class="acc on"><div class="row"><span>الطلب باسم <b>${esc(CUST.n)}</b> · <span dir="ltr">${CUST.p}</span></span><button type="button" class="linkbtn" data-acc>تعديل</button></div><span class="pts" data-pts>${ptsTxt()}</span><span class="pts">⭐ تنضاف لك نقطة ولاء على كل ريال في هذا الطلب</span><button type="button" class="linkbtn" data-favs>❤️ مفضلتي</button></div>`
    :`<div class="acc"><b>سجّل واكسب نقاط ولاء ⭐</b><span class="inote">اسمك وجوالك بس، بدون رقم سري. كل ريال = نقطة، ويوصلنا طلبك جاهز باسمك.</span><button type="button" class="btn alt" data-acc>سجّل الحين (اختياري)</button></div>`}
 function cartView(){
   $("#ttl").textContent="طلبي";
@@ -615,14 +617,24 @@ document.addEventListener("input",e=>{if(cur&&e.target.id==="note"){cur.note=e.t
    Loyalty: 1 point per riyal, tracked by mobile number in the invoicing app and printed on the invoice. ---------- */
 let CUST=null;try{CUST=JSON.parse(localStorage.getItem("rax3d_cust")||"null")}catch(_){}
 const normPhone=v=>{let d=String(v||"").replace(/[٠-٩]/g,c=>"٠١٢٣٤٥٦٧٨٩".indexOf(c)).replace(/\D/g,"");if(d.startsWith("00966"))d=d.slice(5);else if(d.startsWith("966"))d=d.slice(3);if(d.length===9&&d[0]==="5")d="0"+d;return d};
-function openAcc(){$("#cn").value=CUST?CUST.n:"";$("#cp").value=CUST?CUST.p:"";$("#amsg").textContent="";$("#amsg").className="dmsg";$("#aout").hidden=!CUST;$("#abg").hidden=false;setTimeout(()=>$("#cn").focus(),50)}
+function openAcc(){loadPts();$("#cn").value=CUST?CUST.n:"";$("#cp").value=CUST?CUST.p:"";$("#amsg").textContent="";$("#amsg").className="dmsg";$("#aout").hidden=!CUST;$("#abg").hidden=false;setTimeout(()=>$("#cn").focus(),50)}
 function saveAcc(){const n=$("#cn").value.trim().replace(/\s+/g," "),p=normPhone($("#cp").value),m=$("#amsg");
  $("#cn").setAttribute("aria-invalid",!n);$("#cp").setAttribute("aria-invalid",!/^05\d{8}$/.test(p));
  if(!n){m.className="dmsg err";m.textContent="اكتب اسمك.";return}
  if(!/^05\d{8}$/.test(p)){m.className="dmsg err";m.textContent="اكتب رقم جوال سعودي صحيح يبدأ بـ 05 (10 أرقام).";return}
  CUST={n:n.slice(0,40),p};try{localStorage.setItem("rax3d_cust",JSON.stringify(CUST))}catch(_){}
- $("#abg").hidden=true;render(false);toastMsg("أهلاً "+CUST.n+"، تم التسجيل ✓")}
-function logoutAcc(){CUST=null;try{localStorage.removeItem("rax3d_cust")}catch(_){}$("#abg").hidden=true;render(false)}
+ $("#abg").hidden=true;render(false);loadPts();toastMsg("أهلاً "+CUST.n+"، تم التسجيل ✓")}
+/* ---------- loyalty balance: read-only, published by the invoicing app as hashed mobiles in points.json ---------- */
+let PTS=null;
+const ptsTxt=()=>PTS==null?"":(LANG==="en"?"⭐ Your balance: "+PTS+" points":"⭐ رصيدك: "+PTS+" نقطة");
+function paintPts(){const t=ptsTxt();document.querySelectorAll("[data-pts]").forEach(e=>{e.textContent=t;e.hidden=!t});document.querySelectorAll("[data-ptsn]").forEach(e=>{e.textContent=PTS==null?"":" · ⭐ "+PTS})}
+async function loadPts(){PTS=null;if(!CUST||!window.crypto||!crypto.subtle){paintPts();return}
+ try{const r=await fetch("points.json?"+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();
+  const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("rax3d:"+CUST.p));
+  const h=Array.from(new Uint8Array(d)).slice(0,8).map(x=>x.toString(16).padStart(2,"0")).join("");
+  PTS=Math.max(0,+((j.p||{})[h])||0)}catch(_){PTS=null}
+ paintPts()}
+function logoutAcc(){CUST=null;PTS=null;try{localStorage.removeItem("rax3d_cust")}catch(_){}$("#abg").hidden=true;render(false)}
 /* ---------- favourites (registered customers only, kept on the device under the customer's mobile) + share / copy link ---------- */
 const favKey=()=>CUST?"rax3d_fav_"+CUST.p:null;
 function favs(){try{const k=favKey();return k?(JSON.parse(localStorage.getItem(k)||"[]")||[]).filter(id=>ITEMS.some(i=>i.id===id)):[]}catch(_){return[]}}
@@ -786,5 +798,5 @@ $("#langBtn").onclick=()=>{LANG=LANG==="en"?"ar":"en";try{localStorage.setItem("
   else{b.style.position=b.style.top=b.style.left=b.style.right=b.style.overflow="";scrollTo(0,y)}};
  const mo=new MutationObserver(sync);ids.forEach(i=>{const e=document.getElementById(i);if(e)mo.observe(e,{attributes:true,attributeFilter:["hidden"]})})})();
 try{const pid=new URLSearchParams(location.search).get("p");if(pid&&ITEMS.some(i=>i.id===pid)){hist=[{v:"home"},{v:"item",id:pid}];hi=1}}catch(_){}
-render(false);applyLang();
+loadPts();render(false);applyLang();
 </script>

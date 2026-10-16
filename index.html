@@ -450,7 +450,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '43';
+const APP_VERSION = '44';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -578,6 +578,19 @@ async function pushShared(newPin) {   // الدعم الفني يرسل الإع
   return true;
 }
 const pushSharedSoon = () => { pushShared().catch(() => {}); };
+// ===== نشر أرصدة نقاط الولاء للموقع (shop/points.json) — الجوال مشفّر (هاش)، والموقع يطابقه من جوال العميل =====
+const PTS_REPO = 'rax3dsa/rax3dsa.github.io', PTS_PATH = 'shop/points.json';
+async function ptsHash(ph) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rax3d:' + ph)); return Array.from(new Uint8Array(b)).slice(0, 8).map(x => x.toString(16).padStart(2, '0')).join(''); }
+async function publishPoints() {
+  const sync = getSync(); if (!sync) throw new Error('اربط الترقيم المشترك أولاً (الإحصائيات ← الترقيم المشترك)');
+  const bal = new Map();
+  (loadDb().log || []).forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9) return; bal.set(ph, (bal.get(ph) || 0) + Math.floor(+r.total || 0)); });
+  const p = {}; for (const [ph, v] of bal) if (v > 0) p[await ptsHash(ph)] = v;
+  const tgt = { repo: PTS_REPO, token: sync.token };
+  await updateJson(tgt, PTS_PATH, null, cur => (cur && JSON.stringify(cur.p) === JSON.stringify(p)) ? undefined : { updated: Date.now(), p: p }, 'تحديث أرصدة نقاط الولاء');
+  return Object.keys(p).length;
+}
+const publishPointsSoon = () => { publishPoints().catch(() => {}); };
 let flushing = null;
 function flushPending() {   // جوال مدخل البيانات يرسل فواتيره للدعم الفني
   if (flushing) return flushing;
@@ -746,7 +759,7 @@ const API = {
       flushPending().catch(() => {});   // لو ما فيه نت الحين، تنرسل لاحقاً تلقائياً
       return { num: num, total: rec.total, pdfUrl: 'local', milestone: null };
     }
-    saveDb(db); pushSharedSoon();
+    saveDb(db); pushSharedSoon(); publishPointsSoon();
     const after = before + rec.total, g0 = goalFor(before, S.goalStart), g1 = goalFor(after, S.goalStart);
     return { num: num, total: rec.total, pdfUrl: 'local', milestone: g1 > g0 ? { reached: g1 / 2, next: g1, sales: Math.round(after) } : null };
   },
@@ -920,6 +933,7 @@ const API = {
       return [];
     }, 'استلام فواتير مدخل البيانات');
     if (catChanged) pushSharedSoon();
+    if (imported) publishPointsSoon();
     const rq = await readJson(sync, 'requests.json', []);
     return { requests: Array.isArray(rq.data) ? rq.data : [], imported: imported };
   },
@@ -958,7 +972,7 @@ const API = {
     Object.assign(r, { client: String(d.client || '').trim(), phone: String(d.phone || '').trim(), items: its, sub: sub, disc: disc, total: total, sugg: sugg,
       qty: its.reduce((a, i) => a + i.q, 0), desc: its.map(i => i.desc + ' (' + i.q + ')').join(' ، '),
       profit: R2(total - its.reduce((a, i) => a + i.cost * i.q, 0)), edited: todayStr() });
-    saveDb(db); return true;
+    saveDb(db); publishPointsSoon(); return true;
   },
   async deleteInvoice(d, pin) {
     const db = await adminDb(pin);
@@ -967,7 +981,7 @@ const API = {
     db.log.splice(i, 1);
     db.log.forEach(r => { if (Number(r.num) > N) r.num = Number(r.num) - 1; });   // الفواتير اللي بعدها تنزل رقم
     db.nextNum = Math.max(1, db.nextNum - 1);
-    saveDb(db);
+    saveDb(db); publishPointsSoon();
     const sync = getSync(); if (!sync) return { num: N, warn: '' };
     try {
       await updateJson(sync, 'counter.json', null, c => ({ next: Math.max(1, (c && Number(c.next) ? Number(c.next) : db.nextNum + 1) - 1) }), 'حذف الفاتورة ' + N);
@@ -1298,7 +1312,8 @@ function loyaltyCard() {   // ترتيب العملاء حسب رصيد نقاط
   const list = [...m.values()].sort((a, b) => b.pts - a.pts);
   const total = list.reduce((a, c) => a + c.pts, 0);
   return `<div class="period"><h3>⭐ نقاط الولاء</h3><div class="kv"><div>العملاء<b>${list.length}</b></div><div>إجمالي النقاط<b>${total}</b></div><div>ريال = نقطة<b>1</b></div></div>
-    ${list.length ? '<div style="margin-top:10px;display:grid;gap:6px">' + list.slice(0, 15).map((c, i) => `<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line,#333);padding-top:6px"><span>${i + 1}. ${esc(c.name || 'بدون اسم')} <small style="color:var(--mute)" dir="ltr">${esc(c.ph)}</small> <small style="color:var(--mute)">· ${c.n} فاتورة</small></span><b style="color:var(--gold)">${c.pts}</b></div>`).join('') + '</div>' : '<p style="color:var(--mute);margin:8px 0 0">النقاط تبدأ لما تحفظ فاتورة فيها رقم جوال العميل.</p>'}</div>`;
+    ${list.length ? '<div style="margin-top:10px;display:grid;gap:6px">' + list.slice(0, 15).map((c, i) => `<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line,#333);padding-top:6px"><span>${i + 1}. ${esc(c.name || 'بدون اسم')} <small style="color:var(--mute)" dir="ltr">${esc(c.ph)}</small> <small style="color:var(--mute)">· ${c.n} فاتورة</small></span><b style="color:var(--gold)">${c.pts}</b></div>`).join('') + '</div>' : '<p style="color:var(--mute);margin:8px 0 0">النقاط تبدأ لما تحفظ فاتورة فيها رقم جوال العميل.</p>'}
+    <button type="button" class="ghost" style="margin-top:10px" onclick="const b=this;b.disabled=true;publishPoints().then(n=>toast('✔ اننشرت أرصدة '+n+' عميل للموقع')).catch(e=>toast('تعذّر النشر: '+((e&&e.message)||e))).finally(()=>b.disabled=false)">🔄 انشر الأرصدة للموقع</button></div>`;
 }
 function renderLog() {
   const q = $('q').value.trim().toLowerCase(), oq = ($('oq') ? $('oq').value : '').replace(/[^0-9]/g, '');
