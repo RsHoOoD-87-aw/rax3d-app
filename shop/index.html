@@ -216,6 +216,7 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
 .v3d-msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;text-align:center;padding:20px}
 .v3d-hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:12px;color:#7a6c5c;pointer-events:none}
 .v3d-ft{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.price{display:flex;flex-direction:column;gap:4px;margin:10px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.price b{font-size:1.25rem;color:var(--accent)}.price span{font-size:.9rem;color:var(--muted)}.item .pr{display:block;font-style:normal;font-weight:700;color:var(--accent);margin-top:2px}.line .pr{font-style:normal;font-weight:700;color:var(--accent);white-space:nowrap;margin-inline:6px}#sumPrice{display:block;margin:6px 0;color:var(--accent);font-size:1.1rem}.total{font-weight:800;font-size:1.2rem;text-align:center;color:var(--accent);margin:8px 0}
 </style>
 
 <a class="promo" href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener" dir="rtl" aria-label="تابعنا على انستقرام واحصل على خصم">
@@ -290,6 +291,9 @@ const IMG={"d1": {"thumb": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2
 const COLORS=[["كما بالصورة",null],["أبيض","#f3f1ec"],["أسود","#242424"],["رمادي","#8f969a"],["أحمر","#cc2f2f"],["برتقالي","#ee7a1f"],["أصفر","#f2c22c"],["أخضر","#2f9a57"],["أزرق","#2a5cc8"],["بنفسجي","#7a4cc2"],["وردي","#ee6f9e"],["ذهبي","#c79a32"],["بني","#6e4a2e"]];
 const OUT=new Set([9]); /* colours not in stock right now (9 = purple) */
 const DUCK="تعليقة سيارة أو ديكور طبلون", KS="ميدالية مفاتيح وستاند جوال", XB="إكسسوار مكينة xBloom";
+/* PRICES:START — generated from the invoicing-app formula (print file weight + time, shared settings). [single, wholesale(=set)] */
+const PRICE={"abst":[138,107],"chips":[57,45],"clips":[62,48],"ghost":[117,91],"ks1":[23,18],"ks2":[27,21],"ks3":[22,17],"monk":[116,90],"pringles":[67,52],"vase":[117,91],"vase2":[59,46],"vase3":[27,21],"w2":[37,29],"w3":[75,59],"w4":[23,18],"w5":[40,31]};
+/* PRICES:END */
 const ITEMS=[
  {id:"d1",cat:"إكسسوارات السيارة",name:"البطة المصدومة",use:DUCK},
  {id:"d2",cat:"إكسسوارات السيارة",name:"البطة الرايقة",use:DUCK},
@@ -380,7 +384,7 @@ function rail(active){
   $("#rail").innerHTML=`<div class="rail-hd"><b>الأقسام</b><button type="button" id="railClose" aria-label="إغلاق">×</button></div><button type="button" data-home aria-current="${active===null&&hist[hi].v==="home"}"><span class="homeic"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></span>الرئيسية</button>`+`<button type="button" class="inst" data-acc>👤 ${CUST?esc(CUST.n):"سجّل واكسب نقاط"}</button>`+(INST.standalone?"":`<button type="button" class="inst" data-inst><img src="icon-192.png" alt="">حمّل التطبيق</button>`)+
   CATS.map(c=>`<button type="button" data-cat="${c}" aria-current="${c===active}"><img src="${IMG[ITEMS.find(i=>i.cat===c).id].thumb}" alt="">${c}</button>`).join("");
 }
-const card=i=>`<button type="button" class="item" data-open="${i.id}"><img src="${IMG[i.id].thumb}" alt="${i.name}" loading="lazy"><span class="cap"><b>${i.name}</b><small>${i.use}</small></span></button>`;
+const card=i=>`<button type="button" class="item" data-open="${i.id}"><img src="${IMG[i.id].thumb}" alt="${i.name}" loading="lazy"><span class="cap"><b>${i.name}</b><small>${i.use}</small>${PRICE[i.id]?`<em class="pr">${SAR(PRICE[i.id][0])}</em>`:""}</span></button>`;
 function home(){
   $("#ttl").innerHTML='<span><img src="icon-192.png" alt="">RAX3D</span>';
   $("#main").innerHTML=`<section class="hero"><img class="mark" src="icon-192.png" alt="شعار RAX3D" width="76" height="76">
@@ -407,6 +411,7 @@ function itemView(id){   /* the piece page: photo + details only. Editing happen
   <div class="dims"><div class="dims-hd"><b>المقاسات الأصلية</b><button type="button" class="help" id="helpBtn">مم ← سم؟</button></div>
    <div class="axes">${AX.map((a,i)=>`<div class="ax"><span class="k">${a[0]}</span><small>${a[1]}</small><span class="v">${it.d?it.d[i]+" مم":"—"}</span><span class="cm">${it.d?cm(it.d[i])+" سم":"يُضاف قريباً"}</span></div>`).join("")}</div>
    <div class="dims-row"><span>الوزن: ${it.g?`<span class="num">${it.g}</span> غرام`:"يُضاف قريباً"}</span><span>القسم: ${it.cat}</span></div></div>
+  <div class="price">${PRICE[it.id]?`<b>السعر: ${PRICE[it.id][0]} ريال</b><span>الجملة: ${PRICE[it.id][1]} ريال للحبة من ${WQ(it.id)} حبة</span>`:`<b>السعر بالخاص</b>`}</div>
   <p class="note">متوفرة بـ ${COLORS.length-1-OUT.size} لون، وتقدر تعدّل مقاسها حتى ${MAXD} مم.</p>
   <div class="own" id="own" hidden></div>
   <button type="button" class="btn gold" data-edit="${it.id}">${MODELS[it.id]?"🧊 خصّصها وشوفها ثلاثية الأبعاد":"🎨 اختر اللون والمقاس والعدد"}</button>`;
@@ -429,17 +434,18 @@ function editView(id){   /* customise page: preview (3D when available) + colour
   <div class="opt"><span class="lbl">العدد</span><div class="qty"><button type="button" data-q="1" aria-label="زيادة">+</button><output id="qv">1</output><button type="button" data-q="-1" aria-label="إنقاص">−</button><span class="badge" id="qb"></span></div></div>
   <div class="opt"><button type="button" class="other" id="otherBtn" aria-expanded="false">أخرى <span>+</span></button>
    <div id="otherBox" hidden><textarea id="note" maxlength="200" rows="3" placeholder="اكتب طلبك، مثلاً: أبيها تعليقة، أو حجم أكبر، أو اسم عليها"></textarea><div class="count"><span id="cnt">0</span>/200</div></div></div>
-  <div class="confirm"><b>ملخص اختيارك</b><span id="sumLine"></span>
+  <div class="confirm"><b>ملخص اختيارك</b><span id="sumLine"></span><strong id="sumPrice"></strong>
    <button type="button" class="btn gold" data-add>اعتمد وأضف للطلب</button></div>`;
   qtyUI();prep(id);sumUI();if(MODELS[it.id])setTimeout(()=>{if(cur&&cur.it.id===id&&!V.on)open3D()},60);
 }
 function sumUI(){const s=$("#sumLine");if(!s||!cur)return;const sz=cur.sizeOn&&dimsValid()?cur.dim.map(fmt).join(" × ")+" مم":(cur.it.d?cur.it.d.join(" × ")+" مم (الأصلي)":"المقاس الأصلي");
- s.textContent=`اللون: ${COLORS[cur.color][0]} · المقاس: ${sz} · العدد: ${cur.qty}${cur.qty>=WQ(cur.it.id)?" (جملة)":""}`}
+ s.textContent=`اللون: ${COLORS[cur.color][0]} · المقاس: ${sz} · العدد: ${cur.qty}${cur.qty>=WQ(cur.it.id)?" (جملة)":""}`;const sp=$("#sumPrice");if(sp){const u=UP(cur.it.id,cur.qty);sp.textContent=u?`الإجمالي: ${u*cur.qty} ريال`+(cur.sizeOn?" (للمقاس الأصلي)":""):""}}
 function accCard(){return CUST?`<div class="acc on"><div class="row"><span>الطلب باسم <b>${esc(CUST.n)}</b> · <span dir="ltr">${CUST.p}</span></span><button type="button" class="linkbtn" data-acc>تعديل</button></div><span class="pts">⭐ تنضاف لك نقطة ولاء على كل ريال في هذا الطلب</span></div>`
    :`<div class="acc"><b>سجّل واكسب نقاط ولاء ⭐</b><span class="inote">اسمك وجوالك بس، بدون رقم سري. كل ريال = نقطة، ويوصلنا طلبك جاهز باسمك.</span><button type="button" class="btn alt" data-acc>سجّل الحين (اختياري)</button></div>`}
 function cartView(){
   $("#ttl").textContent="طلبي";
-  $("#main").innerHTML=`<h2>طلبي</h2>${cart.length?`<div class="lines">${cart.map((o,i)=>`<div class="line"><img src="${IMG[o.id].thumb}" alt=""><div><b>${o.name}</b><small>${o.color} · ${o.qty} حبة${isW(o)?" · جملة":""}${o.size?" · مقاس "+o.size:""}${o.note?" · "+esc(o.note):""}</small></div><button type="button" data-del="${i}" aria-label="حذف">×</button></div>`).join("")}</div>
+  $("#main").innerHTML=`<h2>طلبي</h2>${cart.length?`<div class="lines">${cart.map((o,i)=>`<div class="line"><img src="${IMG[o.id].thumb}" alt=""><div><b>${o.name}</b><small>${o.color} · ${o.qty} حبة${isW(o)?" · جملة":""}${o.size?" · مقاس "+o.size:""}${o.note?" · "+esc(o.note):""}</small></div>${UP(o.id,o.qty)?`<em class="pr">${SAR(LT(o))}</em>`:""}<button type="button" data-del="${i}" aria-label="حذف">×</button></div>`).join("")}</div>
+  ${cart.some(o=>UP(o.id,o.qty))?`<p class="total">الإجمالي: ${cart.reduce((a,o)=>a+LT(o),0)} ريال</p>`:""}
   ${accCard()}
   <p class="note sendnote">📋 لما تضغط «أرسل الطلب بالخاص» ننسخ رسالة طلبك جاهزة، ونفتح لك محادثتنا في انستقرام. <b>الصقها في خانة الكتابة وأرسلها</b>، ونرد عليك بالسعر.</p>
   <button type="button" class="btn gold" id="sendBtn">أرسل الطلب بالخاص</button><button type="button" class="btn alt" id="copy">انسخ الطلب فقط</button>
@@ -538,6 +544,9 @@ function ownPanel(id){const box=$("#own");if(!box||!isOwnerDevice())return;
 /* wholesale threshold by piece weight: <100 g → 12 pcs, ≥100 g → 6 pcs (unknown weight → 12) */
 const WQ=id=>{const it=ITEMS.find(i=>i.id===id);return it&&it.g>=100?6:12};
 const isW=o=>o.qty>=WQ(o.id);
+const UP=(id,q)=>PRICE[id]?(q>=WQ(id)?PRICE[id][1]:PRICE[id][0]):0;
+const LT=o=>UP(o.id,o.qty)*o.qty;
+const SAR=n=>`${n} ريال`;
 const AR=n=>String(n);
 function qtyUI(){setTimeout(sumUI,0);const w=WQ(cur.it.id);$("#qv").textContent=cur.qty;const b=$("#qb");b.className="badge"+(cur.qty>=w?" on":"");b.textContent=cur.qty>=w?"سعر الجملة مفعّل لهذه القطعة ✓":`سعر الجملة من ${AR(w)} حبة من نفس القطعة (باقي ${w-cur.qty})`}
 function cartUI(){if(!cart.length)OREF="";$("#cartN").textContent=cart.reduce((a,o)=>a+o.qty,0)}
@@ -546,8 +555,8 @@ function cartUI(){if(!cart.length)OREF="";$("#cartN").textContent=cart.reduce((a
 let OREF="";
 function orderCode(){if(!OREF){const A="ABCDEFGHJKMNPQRSTUVWXYZ23456789",r=new Uint32Array(5);crypto.getRandomValues(r);OREF="RX-"+[...r].map(x=>A[x%A.length]).join("")}return OREF}
 function sizeText(o,en){if(o.size)return o.size+(en?" mm":" مم");const it=ITEMS.find(i=>i.id===o.id);return it&&it.d?(en?"Original — ":"الأصلي — ")+it.d.join(" × ")+(en?" mm":" مم"):(en?"Original":"الأصلي")}
-function msgEN(){return "Hello RAX3D 👋\n\nI'd like to order the following:\n"+(CUST?`\n* Name: ${CUST.n}\n* Mobile: ${CUST.p}\n`:"")+cart.map(o=>`\n* Piece: ${tr(o.name)}\n* Colour: ${tr(o.color)}\n* Size: ${sizeText(o,true)}\n* Quantity: ${o.qty}${isW(o)?" (wholesale)":""}\n* Extra options: ${o.note||"None"}`).join("\n")+"\n\nThank you."}
-function msg(){if(LANG==="en")return msgEN();return "مرحبًا RAX3D 👋\n\nأرغب في طلب القطعة التالية:\n"+(CUST?`\n* الاسم: ${CUST.n}\n* الجوال: ${CUST.p}\n`:"")+cart.map(o=>`\n* القطعة: ${o.name}\n* اللون: ${o.color}\n* المقاس: ${sizeText(o)}\n* الكمية: ${o.qty}${isW(o)?" (جملة)":""}\n* خيارات إضافية: ${o.note||"لا يوجد"}`).join("\n")+"\n\nشكرًا لكم."}
+function msgEN(){return "Hello RAX3D 👋\n\nI'd like to order the following:\n"+(CUST?`\n* Name: ${CUST.n}\n* Mobile: ${CUST.p}\n`:"")+cart.map(o=>`\n* Piece: ${tr(o.name)}\n* Colour: ${tr(o.color)}\n* Size: ${sizeText(o,true)}\n* Quantity: ${o.qty}${isW(o)?" (wholesale)":""}${UP(o.id,o.qty)?`\n* Price: ${LT(o)} SAR`:""}\n* Extra options: ${o.note||"None"}`).join("\n")+(cart.some(o=>UP(o.id,o.qty))?`\n\nTotal: ${cart.reduce((a,o)=>a+LT(o),0)} SAR`:"")+"\n\nThank you."}
+function msg(){if(LANG==="en")return msgEN();return "مرحبًا RAX3D 👋\n\nأرغب في طلب القطعة التالية:\n"+(CUST?`\n* الاسم: ${CUST.n}\n* الجوال: ${CUST.p}\n`:"")+cart.map(o=>`\n* القطعة: ${o.name}\n* اللون: ${o.color}\n* المقاس: ${sizeText(o)}\n* الكمية: ${o.qty}${isW(o)?" (جملة)":""}${UP(o.id,o.qty)?`\n* السعر: ${LT(o)} ريال`:""}\n* خيارات إضافية: ${o.note||"لا يوجد"}`).join("\n")+(cart.some(o=>UP(o.id,o.qty))?`\n\nالإجمالي: ${cart.reduce((a,o)=>a+LT(o),0)} ريال`:"")+"\n\nشكرًا لكم."}
 
 /* ---------- recolor: keeps the photo's light and shade, swaps only the printed part's colour ---------- */
 /* every piece is pre-rendered in every colour at high resolution and checked by eye */
@@ -720,6 +729,7 @@ const RX=[
  [/^بضغطة وحدة نثبت لك تطبيق RAX3D (.+)، ويفتح مثل أي برنامج بدون متصفح\.$/,(m,a)=>"One tap installs the RAX3D app "+tw(a)+" — it opens like any program, no browser."],
  [/^أهلاً (.+)، تم التسجيل ✓$/,(m,a)=>"Welcome "+a+", you're signed in ✓"],[/^👤 سجّل واكسب نقاط$/,()=>"👤 Sign in & earn points"],
  [/^(.+) غير متوفر حالياً$/,(m,a)=>tr(a)+" is out of stock right now"],[/^(.+) — غير متوفر حالياً$/,(m,a)=>tr(a)+" — out of stock"],
+ [/^السعر: (\d+) ريال$/,(m,a)=>"Price: "+a+" SAR"],[/^الجملة: (\d+) ريال للحبة من (\d+) حبة$/,(m,a,b)=>"Wholesale: "+a+" SAR each from "+b+" pcs"],[/^الإجمالي: (\d+) ريال( \(للمقاس الأصلي\))?$/,(m,a,b)=>"Total: "+a+" SAR"+(b?" (original size)":"")],[/^(\d+) ريال$/,(m,a)=>a+" SAR"],[/^السعر بالخاص$/,()=>"Price on request (DM)"],
  [/^خصّص: (.+)$/,(m,a)=>"Customise: "+tr(a)],[/^متوفرة بـ (\d+) لون، وتقدر تعدّل مقاسها حتى (\d+) مم\.$/,(m,a,b)=>"Available in "+a+" colours, and you can resize it up to "+b+" mm."],
  [/^اللون: (.+) · المقاس: (.+) · العدد: (\d+)( \(جملة\))?$/,(m,a,b,c,d)=>"Colour: "+tr(a)+" · Size: "+b.replace("مم (الأصلي)","mm (original)").replace("مم","mm").replace("المقاس الأصلي","Original")+" · Qty: "+c+(d?" (wholesale)":"")],
  [/^(\d+) حبة$/,(m,a)=>a+" pcs"],[/^مقاس (.+)$/,(m,a)=>"Size "+a]

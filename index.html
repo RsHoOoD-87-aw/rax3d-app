@@ -477,12 +477,15 @@ async function hashPin(p) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rax3d:' + p));
   return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
 }
+// سعر الجملة = سعر المجموعة: من 12 حبة لو القطعة أقل من 100 غرام، ومن 6 حبات لو 100 غرام أو أكثر
+const bulkQ = w => (+w || 0) >= 100 ? 6 : 12;
+const isBulk = it => it.type === 'مجموعة' || (+it.q || 1) >= bulkQ(it.w);
 function goalFor(sales, start) { let g = start || 10000; while (sales >= g) g *= 2; return g; }
 
 function calcLocal(S, it) {
   const w = +it.w || 0, q = +it.q || 1;
   const cost = w * S.spool / S.spoolW * (1 + S.waste) + ((+it.h || 0) + (+it.m || 0) / 60 + (+it.sec || 0) / 3600) * S.run + S.pack;
-  const sugg = Math.ceil(R2(cost * (it.type === 'مجموعة' ? S.multSet : S.multOne)) - 1e-9);
+  const sugg = Math.ceil(R2(cost * (isBulk(it) ? S.multSet : S.multOne)) - 1e-9);
   const pr = +it.price || 0, unit = pr > 0 ? pr : sugg;
   const disc = R2(unit * q * (+it.disc || 0) / 100);
   return { cost, sugg, unit, q, disc, line: R2(unit * q), total: R2(unit * q - disc), profit: R2(unit * q - disc - cost * q) };
@@ -1167,7 +1170,7 @@ function calcItem(it) {
   const w = +it.w || 0; if (!w) return null;
   const q = +it.q || 1;
   const cost = w * S.spool / S.spoolW * (1 + S.waste) + ((+it.h || 0) + (+it.m || 0) / 60 + (+it.sec || 0) / 3600) * S.run + S.pack;
-  const sugg = Math.ceil(r2(cost * (it.type === 'مجموعة' ? S.multSet : S.multOne)) - 1e-9);
+  const sugg = Math.ceil(r2(cost * (isBulk(it) ? S.multSet : S.multOne)) - 1e-9);
   const pr = +it.price || 0, custom = pr > 0;
   const unit = custom ? pr : sugg;
   const disc = r2(unit * q * (+it.disc || 0) / 100);
@@ -1193,7 +1196,7 @@ function renderItems() {
       <div class="grid g3" style="margin-top:10px;grid-template-columns:1.4fr 1fr 1fr">
         <div><label>النوع</label><div class="seg">
           <button data-type="واحدة" class="${it.type === 'واحدة' ? 'on' : ''}">واحدة</button>
-          <button data-type="مجموعة" class="${it.type === 'مجموعة' ? 'on' : ''}">مجموعة</button></div></div>
+          <button data-type="مجموعة" class="${it.type === 'مجموعة' ? 'on' : ''}">مجموعة / جملة</button></div></div>
         <div><label>العدد</label><input type="number" inputmode="numeric" data-k="q" value="${it.q}"></div>
         <div><label>خصم %</label><input type="number" inputmode="decimal" data-k="disc" value="${it.disc}"></div>
       </div>
@@ -1650,7 +1653,7 @@ async function checkMonthly() {   // أول ما ينفتح التطبيق في 
 
 // ================= إعدادات، نسخ احتياطي، أول تشغيل =================
 const SET_FIELDS = [['spool', 'سعر البكرة (ريال)'], ['spoolW', 'وزن البكرة (جم)'], ['run', 'التشغيل للساعة (ريال)'], ['waste', 'الهدر (0.1 = 10%)'],
-  ['pack', 'التغليف (ريال)'], ['multOne', 'مضاعف القطعة الواحدة'], ['multSet', 'مضاعف المجموعة'], ['goalStart', 'هدف المبيعات الأول'], ['nextNum', 'رقم الفاتورة القادم']];
+  ['pack', 'التغليف (ريال)'], ['multOne', 'مضاعف القطعة الواحدة'], ['multSet', 'مضاعف المجموعة والجملة'], ['goalStart', 'هدف المبيعات الأول'], ['nextNum', 'رقم الفاتورة القادم']];
 function renderSettings() {
   if (!DATA) return;
   const v = Object.assign({}, DATA.settings, { nextNum: DATA.nextNum });
@@ -2115,7 +2118,7 @@ let ED = null;
 function edCalc(it) {
   const w = +it.w || 0; if (!w) return null;
   const cost = w * S.spool / S.spoolW * (1 + S.waste) + ((+it.h || 0) + (+it.m || 0) / 60 + (+it.sec || 0) / 3600) * S.run + S.pack;
-  return { cost: cost, sugg: Math.ceil(r2(cost * (it.type === 'مجموعة' ? S.multSet : S.multOne)) - 1e-9) };
+  return { cost: cost, sugg: Math.ceil(r2(cost * (isBulk(it) ? S.multSet : S.multOne)) - 1e-9) };
 }
 function openEdit(key) {
   const r = DATA && DATA.log.find(x => rk(x) === key); if (!r) return;
@@ -2133,7 +2136,7 @@ function renderEdItems() {
       <div><label>دقائق</label><input data-k="m" type="number" inputmode="numeric" value="${esc(it.m)}"></div>
       <div><label>ثواني</label><input data-k="sec" type="number" inputmode="numeric" value="${esc(it.sec)}"></div></div>
     <div class="grid g3" style="margin-top:8px;grid-template-columns:1.4fr 1fr 1fr">
-      <div><label>النوع</label><div class="seg"><button data-type="واحدة" class="${it.type === 'واحدة' ? 'on' : ''}">واحدة</button><button data-type="مجموعة" class="${it.type === 'مجموعة' ? 'on' : ''}">مجموعة</button></div></div>
+      <div><label>النوع</label><div class="seg"><button data-type="واحدة" class="${it.type === 'واحدة' ? 'on' : ''}">واحدة</button><button data-type="مجموعة" class="${it.type === 'مجموعة' ? 'on' : ''}">مجموعة / جملة</button></div></div>
       <div><label>العدد</label><input data-k="q" type="number" inputmode="numeric" value="${esc(it.q)}"></div>
       <div><label>سعر الوحدة</label><input data-k="unit" type="number" inputmode="decimal" value="${esc(it.unit)}"></div></div>
     <div class="hint" id="eh${i}"></div></div>`).join('');
