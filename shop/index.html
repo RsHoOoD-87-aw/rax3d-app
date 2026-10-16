@@ -296,13 +296,11 @@ const PRICE={"d1":[84,66],"d3":[25,20],"d4":[28,22],"d5":[18,14],"d6":[25,19],"s
 const OLD={"chips":57};
 /* PRICES:END */
 const ITEMS=[
- {id:"d1",cat:"إكسسوارات السيارة",name:"البطة المصدومة",use:DUCK},
  {id:"d2",cat:"إكسسوارات السيارة",name:"البطة الرايقة",use:DUCK},
  {id:"d3",cat:"إكسسوارات السيارة",name:"البطة الدرامية",use:DUCK},
  {id:"d4",cat:"إكسسوارات السيارة",name:"البطة الطايرة",use:DUCK},
  {id:"d5",cat:"إكسسوارات السيارة",name:"البطة الكيوت",use:DUCK},
  {id:"d6",cat:"إكسسوارات السيارة",name:"بطة اليوغا",use:DUCK},
- {id:"hood",cat:"ميداليات",name:"بطة بالهودي",use:"ميدالية أو تعليقة شنطة"},
  {id:"skel",cat:"ميداليات",name:"هيكل عظمي",use:"ميدالية أو ديكور مكتب"},
  {id:"ks1",cat:"ميداليات",name:"ميدالية وستاند جوال، ثلاثي",use:KS},
  {id:"ks2",cat:"ميداليات",name:"ميدالية وستاند جوال، مدمج",use:KS},
@@ -365,7 +363,7 @@ const MODELS={d4:{file:"models/d4.json",grid:true,keep:["keep"],def:1},d2:{file:
 ITEMS.forEach(i=>{if(WEIGHT[i.id])i.g=WEIGHT[i.id];if(DIM[i.id])i.d=DIM[i.id]});
 const CAT_ORDER=["إكسسوارات السيارة","إكسسوارات القهوة","إكسسوارات المكتب","الديكور","ميداليات","سناك وضيافة","ألعاب وصفارات"];
 const CATS=[...new Set(ITEMS.map(i=>i.cat))].sort((a,b)=>CAT_ORDER.indexOf(a)-CAT_ORDER.indexOf(b));
-const FEATURED=["vase2","frame","pringles","d1","ks2","monk"]; /* "الأكثر طلباً" on the home page */
+const FEATURED=["vase2","frame","pringles","d4","ks2","monk"]; /* "الأكثر طلباً" on the home page */
 const $=s=>document.querySelector(s);
 const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let cart=[], cur=null, hist=[{v:"home"}], hi=0;
