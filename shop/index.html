@@ -292,7 +292,7 @@ const COLORS=[["كما بالصورة",null],["أبيض","#f3f1ec"],["أسود",
 const OUT=new Set([9]); /* colours not in stock right now (9 = purple) */
 const DUCK="تعليقة سيارة أو ديكور طبلون", KS="ميدالية مفاتيح وستاند جوال", XB="إكسسوار مكينة xBloom";
 /* PRICES:START — generated from the invoicing-app formula (print file weight + time, shared settings). [single, wholesale(=set)] */
-const PRICE={"ltr":[87,68],"w1":[31,24],"abst":[138,107],"chips":[30,24],"clips":[62,48],"ghost":[117,91],"ks1":[23,18],"ks2":[27,21],"ks3":[22,17],"monk":[116,90],"pringles":[67,52],"vase":[117,91],"vase2":[59,46],"vase3":[27,21],"w2":[37,29],"w3":[75,59],"w4":[23,18],"w5":[40,31]};
+const PRICE={"d1":[84,66],"d3":[25,20],"d4":[28,22],"d5":[18,14],"d6":[25,19],"skel":[26,21],"ltr":[87,68],"w1":[31,24],"abst":[138,107],"chips":[30,24],"clips":[62,48],"ghost":[117,91],"ks1":[23,18],"ks2":[27,21],"ks3":[22,17],"monk":[116,90],"pringles":[67,52],"vase":[117,91],"vase2":[59,46],"vase3":[27,21],"w2":[37,29],"w3":[75,59],"w4":[23,18],"w5":[40,31]};
 const OLD={"chips":57};
 /* PRICES:END */
 const ITEMS=[
@@ -341,7 +341,8 @@ const WEIGHT={
  vase:146,
  vase2:61,
  vase3:16,
- ltr:85
+ ltr:85,
+ d1:82,d3:9,d4:16,d5:3,d6:12,skel:13
 };
 /* original size in mm [X width, Y depth, Z height]. Fill as: d1:[60,55,80] */
 const DIM={
@@ -355,7 +356,8 @@ const DIM={
  vase:[150,150,150],
  vase2:[143,146,180],
  vase3:[48,48,119],
- ltr:[163,21,177]
+ ltr:[163,21,177],
+ d1:[77,86,122],d4:[94,77,23],d5:[25,25,30],d6:[28,69,75],skel:[129,116,16]
 };
 const MAXD=255;
 /* 3D models from the print files. file: path published next to the page. keep: names of 3MF parts that keep their own colour (beak, eyes...). Fill as: d1:{file:"models/d1.3mf",keep:["beak","eyes"]} */
