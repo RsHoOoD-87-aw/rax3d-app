@@ -147,7 +147,7 @@ input[type=number]{direction:ltr;text-align:center}
 .st td:not(:first-child),.st th:not(:first-child){text-align:center}
 .sheet .box{max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;text-align:right}
 .sheet{overscroll-behavior:contain;touch-action:pan-y}
-html.lock,html.lock body{overflow:hidden;overscroll-behavior:none}
+html.sheetopen,html.sheetopen body{overflow:hidden;overscroll-behavior:none}
 #pcSearch{width:100%;margin:6px 0}
 .sheet [hidden]{display:none!important}
 .sheet h2,.sheet .tot{text-align:center}
@@ -450,7 +450,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '45';
+const APP_VERSION = '46';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -590,7 +590,7 @@ async function publishPoints() {
   await updateJson(tgt, PTS_PATH, null, cur => (cur && JSON.stringify(cur.p) === JSON.stringify(p)) ? undefined : { updated: Date.now(), p: p }, 'تحديث أرصدة نقاط الولاء');
   return Object.keys(p).length;
 }
-const publishPointsSoon = () => {};   // مؤقتاً معطّل: النشر يدوي من الإحصائيات
+const publishPointsSoon = () => { publishPoints().catch(() => {}); };
 let flushing = null;
 function flushPending() {   // جوال مدخل البيانات يرسل فواتيره للدعم الفني
   if (flushing) return flushing;
@@ -1886,7 +1886,7 @@ $('ordClose').onclick = () => $('ordSheet').classList.remove('on');
 $('ordGo').onclick = async () => { const v = $('ordIn').value, o = parseMsg(v, await catalog()) || (await parseCode(v)) || parseOrder(v); if (!o) { $('ordErr').textContent = 'ما لقينا كود طلب صحيح — تأكد إنك نسخت الكود كامل'; return; }
   $('ordSheet').classList.remove('on'); fillFromOrder(o); };
 $('pcBtn').onclick = openPieces;
-new MutationObserver(() => document.documentElement.classList.toggle('lock', !!document.querySelector('.sheet.on'))).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+new MutationObserver(() => document.documentElement.classList.toggle('sheetopen', !!document.querySelector('.sheet.on'))).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
 $('pcClose').onclick = () => $('pcSheet').classList.remove('on');
 $('pcList').addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (b) { $('pcSheet').classList.remove('on'); downloadPiece(b.dataset.pc); } });
 function showPts() { const h = $('ptsHint'); if (!h) return; const l = loyalty($('phone').value); h.textContent = l && l.balance ? '⭐ رصيد العميل: ' + l.balance + ' نقطة' : (l ? '⭐ عميل جديد — يبدأ يجمع نقاط من هذي الفاتورة' : '⭐ نقاط الولاء تظهر هنا'); }
