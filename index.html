@@ -450,7 +450,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const APP_VERSION = '44';
+const APP_VERSION = '45';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -590,7 +590,7 @@ async function publishPoints() {
   await updateJson(tgt, PTS_PATH, null, cur => (cur && JSON.stringify(cur.p) === JSON.stringify(p)) ? undefined : { updated: Date.now(), p: p }, 'تحديث أرصدة نقاط الولاء');
   return Object.keys(p).length;
 }
-const publishPointsSoon = () => { publishPoints().catch(() => {}); };
+const publishPointsSoon = () => {};   // مؤقتاً معطّل: النشر يدوي من الإحصائيات
 let flushing = null;
 function flushPending() {   // جوال مدخل البيانات يرسل فواتيره للدعم الفني
   if (flushing) return flushing;
