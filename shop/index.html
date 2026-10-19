@@ -4,7 +4,7 @@
 <meta name="description" content="RAX3D — اختر قطعتك واللون، ونطبعها لك بالطباعة ثلاثية الأبعاد">
 <link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#f4eadb" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#2a2118" media="(prefers-color-scheme: dark)"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f4eadb" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#2a2118" media="(prefers-color-scheme: dark)"><script>try{var _m=localStorage.getItem("rax_shop_theme");if(_m&&_m!=="auto")document.documentElement.setAttribute("data-theme",_m)}catch(e){}</script><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="RAX3D"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>RAX3D | اطلب قطعتك</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -31,6 +31,10 @@ html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!
 :root[data-theme="dark"]{
   --bg:#2a2118; --surface:#352a1f; --fg:#f5ebd9; --muted:#c7b392; --line:#4f4130; --promo:#1d1710; --img-filter:brightness(.94) saturate(1.03);
   --accent:#e2b560; --accent-fg:#241a0d; --ink:#f5ebd9; --ok:#7fd39a; --ok-bg:#25392b; --stage:#43362a; color-scheme:dark}
+:root[data-theme="black"]{--bg:#000; --surface:#14110d; --fg:#f5ebd9; --muted:#c2ae8e; --line:#2e251a; --promo:#0b0906; --img-filter:brightness(.88) saturate(1.03);
+  --accent:#e2b560; --accent-fg:#241a0d; --ink:#f5ebd9; --ok:#7fd39a; --ok-bg:#16271c; --stage:#1f1810; color-scheme:dark}
+.themebtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer;flex:none;font-size:17px;line-height:1}
+@media (max-width:430px){.top{gap:4px}.nav,.themebtn,.menubtn{width:34px!important;height:34px!important}.langbtn{height:34px!important;min-width:34px!important;width:34px!important;padding:0!important}.cartbtn{height:34px!important;padding:0 8px!important}.ttl img{display:none}.top .ttl{font-size:15px}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6;margin:0;
@@ -238,6 +242,7 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
   <button class="nav" id="fwd" type="button" aria-label="الصفحة التالية"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
   <button class="menubtn" id="menuBtn" type="button" aria-label="الأقسام" aria-expanded="false" aria-controls="rail"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="mlbl">الأقسام</span></button>
   <div class="ttl" id="ttl"><span><img src="icon-192.png" alt="">RAX3D</span></div>
+  <button class="themebtn" id="themeBtn" type="button" aria-label="المظهر">🌓</button>
   <button class="langbtn" id="langBtn" type="button" aria-label="English">EN</button>
   <button class="cartbtn" id="cartBtn" type="button">طلبي <b id="cartN">0</b></button>
 </header>
@@ -849,4 +854,25 @@ try{const pid=new URLSearchParams(location.search).get("p");if(pid&&ITEMS.some(i
  };
 })();
 loadPts();render(false);applyLang();
+</script>
+<script>
+(function(){
+  var b=document.getElementById('themeBtn'); if(!b) return;
+  var O=['auto','light','dark','black'], I={auto:'🌓',light:'☀️',dark:'🌙',black:'🌑'}, N={auto:'تلقائي',light:'نهاري',dark:'داكن',black:'ليلي'};
+  var C={light:'#f4eadb',dark:'#2a2118',black:'#000000'};
+  function get(){try{var m=localStorage.getItem('rax_shop_theme');return O.indexOf(m)>-1?m:'auto'}catch(e){return 'auto'}}
+  function apply(m){
+    var d=document.documentElement;
+    if(m==='auto')d.removeAttribute('data-theme'); else d.setAttribute('data-theme',m);
+    document.querySelectorAll('meta[name=theme-color][data-t]').forEach(function(x){x.remove()});
+    if(m!=='auto'){var x=document.createElement('meta');x.name='theme-color';x.content=C[m];x.setAttribute('data-t','1');document.head.appendChild(x);}
+    b.textContent=I[m]; b.setAttribute('aria-label','المظهر: '+N[m]); b.title=N[m];
+  }
+  apply(get());
+  b.addEventListener('click',function(){
+    var n=O[(O.indexOf(get())+1)%O.length];
+    try{localStorage.setItem('rax_shop_theme',n)}catch(e){}
+    apply(n);
+  });
+})();
 </script>

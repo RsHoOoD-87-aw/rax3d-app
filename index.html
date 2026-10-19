@@ -12,8 +12,8 @@
 <script>
 (function(){try{var m=localStorage.getItem('rax_theme')||'dark',d=document.documentElement;
 var l=m==='light'||(m==='auto'&&matchMedia('(prefers-color-scheme: light)').matches);
-d.setAttribute('data-theme',l?'light':'dark');
-var t=document.querySelector('meta[name=theme-color]');if(t)t.setAttribute('content',l?'#f5f0e4':'#1e1c18');}catch(e){}})();
+d.setAttribute('data-theme',l?'light':(m==='black'?'black':'dark'));
+var t=document.querySelector('meta[name=theme-color]');if(t)t.setAttribute('content',l?'#f5f0e4':(m==='black'?'#000000':'#1e1c18'));}catch(e){}})();
 </script>
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.png">
@@ -29,6 +29,10 @@ var t=document.querySelector('meta[name=theme-color]');if(t)t.setAttribute('cont
   --goal-bg:linear-gradient(135deg,#2b2312,#1f1d19); --row-line:#35322b;
   --card-sh:none; --btn-sh:none; --bar-sh:none; --shadow:0 6px 24px rgba(0,0,0,.6); --ring:rgba(224,182,74,.28);
   --r-lg:18px; --r-sm:10px;
+}
+:root[data-theme="black"]{
+  --ink:#000; --panel:#0e0e0d; --line:#2c2a25; --field:#181715; --track:#26241f; --bar:#080807;
+  --goal-bg:linear-gradient(135deg,#1a1507,#0c0b09); --row-line:#1f1d19; --scrim:rgba(0,0,0,.88);
 }
 :root[data-theme="light"]{
   color-scheme:light;
@@ -2497,13 +2501,13 @@ else {
 <script>
 (function(){
   var btn=document.getElementById('themeBtn'); if(!btn) return;
-  var ORDER=['dark','light','auto'], ICON={dark:'🌙',light:'☀️',auto:'🌓'}, NAME={dark:'داكن',light:'نهاري',auto:'تلقائي (حسب الجوال)'};
+  var ORDER=['dark','black','light','auto'], ICON={dark:'🌙',black:'🌑',light:'☀️',auto:'🌓'}, NAME={dark:'داكن',black:'ليلي (أسود)',light:'نهاري',auto:'تلقائي (حسب الجوال)'};
   function get(){try{var m=localStorage.getItem('rax_theme');return ORDER.indexOf(m)>-1?m:'dark'}catch(e){return 'dark'}}
   function apply(m,fade){
     var l=m==='light'||(m==='auto'&&matchMedia('(prefers-color-scheme: light)').matches), d=document.documentElement;
     if(fade){d.classList.add('themefade');setTimeout(function(){d.classList.remove('themefade')},350)}
-    d.setAttribute('data-theme',l?'light':'dark');
-    var t=document.querySelector('meta[name=theme-color]'); if(t) t.setAttribute('content',l?'#f5f0e4':'#1e1c18');
+    d.setAttribute('data-theme',l?'light':(m==='black'?'black':'dark'));
+    var t=document.querySelector('meta[name=theme-color]'); if(t) t.setAttribute('content',l?'#f5f0e4':(m==='black'?'#000000':'#1e1c18'));
     btn.textContent=ICON[m]; btn.setAttribute('aria-label','المظهر: '+NAME[m]);
   }
   apply(get(),false);
