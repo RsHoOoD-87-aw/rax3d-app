@@ -15,6 +15,27 @@
 .item{padding:7px!important}.item img{border-radius:12px!important}
 .item .cap{padding:9px 5px 6px!important}
 .item:hover,.cat:hover{border-color:var(--accent)}
+/* ===== طبقة الفخامة ===== */
+html,body{overflow-x:clip}
+body{background:radial-gradient(120% 60% at 50% -8%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 62%),var(--bg);background-attachment:scroll}
+.hero{position:relative;isolation:isolate;padding-top:14px}
+.hero::before{content:"";position:absolute;z-index:-1;top:-30px;left:50%;width:min(460px,100%);aspect-ratio:1;transform:translateX(-50%);background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 30%,transparent),transparent 70%);filter:blur(8px);opacity:.75;pointer-events:none}
+.hero .mark{width:88px;height:88px;border-radius:24px;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 55%,transparent),0 18px 40px -12px color-mix(in srgb,var(--accent) 70%,#000);animation:rxfloat 5s ease-in-out infinite}
+@keyframes rxfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.hero .tag{font-size:clamp(26px,7.4vw,38px);font-weight:700;letter-spacing:-.2px;background:linear-gradient(100deg,var(--fg) 30%,color-mix(in srgb,var(--accent) 80%,var(--fg)) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.hero .lead{max-width:34ch;margin-inline:auto;font-size:15.5px}
+.hero .shop{position:relative;overflow:hidden;padding:15px;font-size:16.5px;border-radius:16px;box-shadow:0 14px 30px -14px color-mix(in srgb,var(--accent) 80%,#000)}
+.hero .shop::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.38) 50%,transparent 65%);transform:translateX(-120%);animation:rxsheen 4.2s ease-in-out 1.4s infinite}
+@keyframes rxsheen{0%{transform:translateX(-120%)}38%,100%{transform:translateX(120%)}}
+.perks li{backdrop-filter:blur(6px);transition:transform .25s,border-color .25s}
+h2{position:relative;padding-inline-start:12px;margin-top:6px}
+h2::before{content:"";position:absolute;inset-inline-start:0;top:.2em;bottom:.2em;width:4px;border-radius:4px;background:linear-gradient(var(--accent),color-mix(in srgb,var(--accent) 40%,transparent))}
+.item,.cat,.how li{transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s,border-color .28s}
+.item:active,.cat:active{transform:scale(.975)}
+@media (hover:hover){.item:hover,.cat:hover{transform:translateY(-4px);box-shadow:0 22px 38px -18px color-mix(in srgb,var(--accent) 70%,#000)}.perks li:hover{transform:translateY(-2px);border-color:var(--accent)}}
+.item .price,.item .pr{letter-spacing:.2px}
+@media (prefers-reduced-motion:reduce){.hero .mark,.hero .shop::after{animation:none}.item,.cat{transition:none}}
+
 /* smooth scroll (Lenis) */
 html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}.lenis.lenis-stopped{overflow:clip}
 
