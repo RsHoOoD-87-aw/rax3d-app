@@ -8,15 +8,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="RAX3D">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#1e1c18">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#000; --panel:#141414; --line:#2a2a2a; --field:#1d1d1d;
-  --gold:#E0B64A; --gold-d:#C9A227; --text:#f2efe6; --mute:#9a968c; --good:#7fcf8a; --bad:#ff7b6b;
+  --ink:#1e1c18; --panel:#2a2823; --line:#46423a; --field:#34312b;
+  --gold:#E0B64A; --gold-d:#C9A227; --text:#f7f4ea; --mute:#c5c0b3; --good:#7fcf8a; --bad:#ff7b6b;
   --r-lg:18px; --r-sm:10px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -61,7 +61,7 @@ input[type=number]{direction:ltr;text-align:center}
 .goal-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .goal-top b{color:var(--gold);font-size:18px;direction:ltr}
 .goal-top span{font-size:13px;color:var(--mute)}
-.goal-bar{height:10px;background:#262626;border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.goal-bar{height:10px;background:#3d3a33;border-radius:99px;overflow:hidden;margin:10px 0 6px}
 .goal-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));border-radius:99px;transition:width .6s}
 .goal-sub{display:flex;justify-content:space-between;font-size:12px;color:var(--mute)}
 .goal-sub b{color:var(--text);font-weight:500}
@@ -69,7 +69,7 @@ input[type=number]{direction:ltr;text-align:center}
 .loss{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
 .loss-top{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--mute)}
 .loss-top b{font-size:16px;color:var(--text);white-space:nowrap}
-.loss-bar{height:8px;background:#262626;border-radius:99px;overflow:hidden;margin:8px 0 4px}
+.loss-bar{height:8px;background:#3d3a33;border-radius:99px;overflow:hidden;margin:8px 0 4px}
 .loss-bar i{display:block;height:100%;width:0;background:#b4574b;border-radius:99px;transition:width .6s}
 .loss-sub{font-size:12px;color:var(--mute)}
 .party{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
@@ -83,7 +83,7 @@ input[type=number]{direction:ltr;text-align:center}
 .party p b{color:var(--gold)}
 @media (prefers-reduced-motion:no-preference){.party.on .cup{animation:pop .6s ease-out}@keyframes pop{0%{transform:scale(.2) rotate(-20deg)}70%{transform:scale(1.2)}100%{transform:scale(1)}}}
 
-.bar{position:fixed;left:0;right:0;bottom:0;background:#0a0a0a;border-top:2px solid var(--gold-d);
+.bar{position:fixed;left:0;right:0;bottom:0;background:#25231e;border-top:2px solid var(--gold-d);
   padding:12px 14px calc(12px + env(safe-area-inset-bottom,0));z-index:10}
 .bar .wrap{padding:0}
 .sum{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px}
@@ -118,7 +118,7 @@ input[type=number]{direction:ltr;text-align:center}
 .sheet h2{margin:0 0 4px;font-size:21px}
 .sheet .tot{font-size:38px;color:var(--gold);font-weight:700;margin:6px 0 16px;direction:ltr}
 .sheet a.save,.sheet button{display:block;text-decoration:none;margin-top:10px}
-.ghost{width:100%;background:none;border:1px solid #5b5648;border-radius:14px;padding:13px;color:var(--text);font-size:16px;cursor:pointer}
+.ghost{width:100%;background:none;border:1px solid #7a7466;border-radius:14px;padding:13px;color:var(--text);font-size:16px;cursor:pointer}
 .err{color:var(--bad);font-size:14px;min-height:20px;margin:0 0 6px;text-align:center}
 .loading{text-align:center;color:var(--mute);padding:60px 0}
 .lock{position:fixed;inset:0;background:var(--ink);z-index:30;display:none;align-items:center;justify-content:center;padding:24px}
