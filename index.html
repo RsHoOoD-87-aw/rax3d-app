@@ -302,7 +302,8 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
     </div>
     <div id="frPartner" hidden>
       <div id="fJoinBox"><label for="fJoin">الصق رمز الربط اللي أرسله لك الدعم الفني</label>
-      <textarea id="fJoin" rows="4" dir="ltr" autocomplete="off" placeholder="RAX3D-…"></textarea></div>
+      <textarea id="fJoin" rows="4" dir="ltr" autocomplete="off" placeholder="RXJ2-…"></textarea></div>
+      <label for="fJP" style="margin-top:10px;display:block">رمز الرابط (قاله لك الدعم الفني بالصوت أو برسالة منفصلة)</label><input id="fJP" type="password" autocomplete="off" autocapitalize="off" maxlength="40">
       <label for="fJ1" style="margin-top:10px;display:block">اختر رقمك السري (أرقام من 4 إلى 12 خانة)</label><input id="fJ1" type="password" inputmode="numeric" autocomplete="new-password" maxlength="12">
       <label for="fJ2" style="margin-top:10px;display:block">أعد كتابة الرقم السري</label><input id="fJ2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="12">
     </div>
@@ -388,12 +389,11 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
   </div>
   <div id="edItems"></div>
   <p style="color:var(--mute);font-size:12px;margin:6px 0 0">لحذف قطعة اكتب عددها 0 — لما تغيّر الوزن أو الوقت يتحدث السعر التلقائي، وتقدر تكتب سعر بنفسك</p>
-  <label for="edDisc" style="margin-top:10px;display:block">الخصم الكلي (ريال)</label><input id="edDisc" type="number" inputmode="decimal">
   <p class="edsum" id="edSum"></p>
   <p class="err" id="edMsg"></p>
   <button class="save" id="edSave">حفظ التعديل</button>
   <button class="ghost" id="edClose">إلغاء</button>
-  <button class="ghost" id="edDel" style="color:var(--bad);border-color:rgba(255,123,107,.45);margin-top:22px">🗑️ حذف الفاتورة</button>
+  <button class="ghost" id="edDel" style="color:var(--bad);border-color:rgba(255,123,107,.45);margin-top:22px">🚫 إلغاء الفاتورة (يبقى رقمها)</button>
 </div></div>
 
 <div class="sheet" id="resetSheet" style="z-index:45"><div class="box">
@@ -434,6 +434,7 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
   <div id="lrForm">
     <p>🔑 اختر رقمك السري الجديد واكتبه مرتين</p>
     <div style="text-align:right">
+      <label for="lrP">رمز الرابط (قاله لك الدعم الفني)</label><input id="lrP" type="password" autocomplete="off" autocapitalize="off" maxlength="40" style="margin-bottom:10px">
       <label for="lr1">الرقم السري الجديد (4 إلى 12 رقم)</label><input id="lr1" type="password" inputmode="numeric" autocomplete="new-password" maxlength="12">
       <label for="lr2" style="margin-top:10px;display:block">أعد كتابة الرقم السري</label><input id="lr2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="12">
     </div>
@@ -448,9 +449,10 @@ textarea{width:100%;background:var(--field);border:1px solid var(--line);border-
 </div></div>
 
 <div class="toast" id="toast" hidden></div>
+<div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '46';
+const APP_VERSION = '47';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -461,12 +463,13 @@ function loadDb() {
   d.settings = Object.assign({}, DEF_SETTINGS, d.settings || {});
   d.log = Array.isArray(d.log) ? d.log : []; d.catalog = Array.isArray(d.catalog) ? d.catalog : [];
   d.nextNum = Number(d.nextNum) || 1; d.pins = d.pins || null; d.fails = d.fails || { n: 0, until: 0 };
-  d.role = d.role || (d.pins && d.pins.admin ? 'admin' : null);   // جوال الدعم الفني أو جوال مدخل البيانات
+  d.role = d.role || (d.pins && (d.pins.admin || d.pins.adminH) ? 'admin' : null);   // جوال الدعم الفني أو جوال مدخل البيانات
   d.shared = d.shared || null; d.pending = Array.isArray(d.pending) ? d.pending : [];
   if (d.recMail === 'rax3d.sa@gmail.com' || d.recMail === 'rashid.aw@hotmail.com') d.recMail = null;   // الإيميل المعتمد الجديد
   return d;
 }
-function saveDb(d) { localStorage.setItem(DB_KEY, JSON.stringify(d)); }
+function saveDb(d) { localStorage.setItem(DB_KEY, JSON.stringify(d)); try { cloudBackupSoon(); } catch (e) {} }
+const isLive = r => !!r && r.status !== 'ملغاة';   // v47: الفاتورة الملغاة تبقى برقمها بس ما تدخل في المجاميع والنقاط
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
 const todayStr = () => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); };
 const R2 = v => Math.round(Number(v || 0) * 100) / 100;
@@ -476,6 +479,60 @@ function upsertCat(list, c) { const k = list.findIndex(x => normN(x.desc) === no
 async function hashPin(p) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rax3d:' + p));
   return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+// ===== v47: أدوات تشفير (WebCrypto): PBKDF2 + AES-GCM =====
+const hex = u => Array.from(new Uint8Array(u)).map(x => x.toString(16).padStart(2, '0')).join('');
+const unhex = h => new Uint8Array((String(h).match(/../g) || []).map(x => parseInt(x, 16)));
+function bytesB64u(u) { u = new Uint8Array(u); let o = ''; for (let i = 0; i < u.length; i += 0x8000) o += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(o).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64uBytes(s) { s = String(s).replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+async function pbkdf2(pass, salt, iter, bits) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(String(pass)), 'PBKDF2', false, ['deriveBits']);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: typeof salt === 'string' ? new TextEncoder().encode(salt) : salt, iterations: iter }, k, bits || 256));
+}
+// رمز الدعم الفني: ينحفظ هاش PBKDF2 مع ملح عشوائي فقط (مو نص صريح)
+const PIN_ITER = 200000;
+async function pinHashNew(p) { const s = crypto.getRandomValues(new Uint8Array(16)); return 'p2$' + PIN_ITER + '$' + hex(s) + '$' + hex(await pbkdf2(p, s, PIN_ITER)); }
+async function pinCheck(p, stored) { const a = String(stored || '').split('$'); if (a[0] !== 'p2' || !a[3]) return false; return hex(await pbkdf2(p, unhex(a[2]), +a[1])) === a[3]; }
+let PIN_MEMO = null;   // آخر رمز صحيح بهذي الجلسة (بالذاكرة فقط) عشان ما نعيد الحساب الثقيل مع كل عملية
+async function adminPinOk(db, p) {
+  const P = db.pins || {}; if (!p) return false;
+  if (P.adminH) { if (PIN_MEMO && PIN_MEMO.h === P.adminH && PIN_MEMO.p === p) return true; const ok = await pinCheck(p, P.adminH); if (ok) PIN_MEMO = { h: P.adminH, p: p }; return ok; }
+  return p === P.admin;   // نسخة قديمة قبل الترحيل
+}
+async function migratePins() {   // ترحيل الرموز المحفوظة نص صريح ← هاش (مرة وحدة عند أول فتح)
+  const P = Object.assign({}, loadDb().pins || {}); let ch = false;
+  if (P.admin) { P.adminH = await pinHashNew(P.admin); ch = true; }
+  if (P.partner) { P.partnerSH = await hashPin(P.partner); ch = true; }
+  if (!ch) return false;
+  const d2 = loadDb(); d2.pins = Object.assign({}, d2.pins || {}, { adminH: P.adminH || (d2.pins || {}).adminH, partnerSH: P.partnerSH || (d2.pins || {}).partnerSH });
+  if (!d2.pins.partnerSH) delete d2.pins.partnerSH; if (!d2.pins.adminH) delete d2.pins.adminH;
+  delete d2.pins.admin; delete d2.pins.partner; saveDb(d2); return true;
+}
+// رابط الربط/الاستعادة: التوكن مشفّر AES-GCM بمفتاح PBKDF2 من «رمز الرابط» اللي يقوله الدعم الفني بالصوت أو برسالة منفصلة
+const JOIN_ITER = 250000;
+async function joinKey(pass, salt, use) { return crypto.subtle.importKey('raw', await pbkdf2(String(pass).trim(), salt, JOIN_ITER), 'AES-GCM', false, [use]); }
+async function sealJoin(obj, pass) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, await joinKey(pass, salt, 'encrypt'), new TextEncoder().encode(JSON.stringify(obj)));
+  return 'RXJ2-' + bytesB64u(salt) + '.' + bytesB64u(iv) + '.' + bytesB64u(ct);
+}
+async function openJoin(code, pass) {
+  let c = String(code || '').trim(); try { c = decodeURIComponent(c); } catch (e) {}
+  if (/^RAX3D-/.test(c)) throw new Error('الرابط قديم، اطلب رابط جديد');
+  const m = c.match(/^RXJ2-([\w-]+)\.([\w-]+)\.([\w-]+)$/);
+  if (!m) throw new Error('رمز الربط غير صحيح — افتح الرابط من رسالة الدعم الفني مرة ثانية');
+  if (!String(pass || '').trim()) throw new Error('اكتب «رمز الرابط» اللي قاله لك الدعم الفني');
+  try {
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64uBytes(m[2]) }, await joinKey(pass, b64uBytes(m[1]), 'decrypt'), b64uBytes(m[3]));
+    const j = JSON.parse(new TextDecoder().decode(pt)); if (j && j.r && j.t) return j;
+  } catch (e) {}
+  throw new Error('رمز الرابط غلط — تأكد منه من الدعم الفني');
+}
+function askLinkPass() {
+  const v = prompt('اختر «رمز الرابط» (6 خانات أو أكثر، أرقام أو حروف).\nقوله لمدخل البيانات بالصوت أو برسالة منفصلة — لا ترسله مع الرابط:');
+  if (v === null) return null; const t = String(v).trim();
+  if (t.length < 6) { alert('رمز الرابط لازم يكون 6 خانات أو أكثر'); return null; }
+  return t;
 }
 // سعر الجملة = سعر المجموعة: من 12 حبة لو القطعة أقل من 100 غرام، ومن 6 حبات لو 100 غرام أو أكثر
 const bulkQ = w => (+w || 0) >= 100 ? 6 : 12;
@@ -497,7 +554,11 @@ function setSync(v) { if (v) localStorage.setItem(SYNC_KEY, JSON.stringify(v)); 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function b64e(str) { const b = new TextEncoder().encode(str); let o = ''; for (let i = 0; i < b.length; i += 0x8000) o += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(o); }
 function b64d(str) { const bin = atob(String(str).replace(/\s/g, '')); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
+// v47: التوكن يُستخدم على المستودع الخاص (rax3dsa/rax3d-data) فقط. أي مستودع *.github.io (الموقع العام) مرفوض،
+// إلا الكتابة الوحيدة المعزولة publicWritePoints() على shop/points.json (انظر تحت).
+const PUBLIC_REPO_RE = /\.github\.io$/i;
 function gh(sync, method, body, path) {
+  if (PUBLIC_REPO_RE.test(String(sync.repo)) && !(sync._public && sync._public === path)) return Promise.reject(new Error('ممنوع: رمز GitHub يُستخدم على المستودع الخاص فقط'));
   const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 12000);
   return fetch('https://api.github.com/repos/' + sync.repo + '/contents/' + (path || 'counter.json'), {
     method, cache: 'no-store', signal: ctrl.signal,
@@ -556,7 +617,7 @@ async function auth(db, pin, refresh) {
   if (db.fails.until > Date.now()) throw new Error('LOCKED');
   const p = String(pin || '');
   let ok = false;
-  if (db.role === 'admin') ok = !!p && p === (db.pins || {}).admin;
+  if (db.role === 'admin') ok = await adminPinOk(db, p);
   else {
     if (refresh) await pullShared(db);
     ok = !!p && !!(db.shared && db.shared.partnerHash) && (await hashPin(p)) === db.shared.partnerHash;
@@ -571,24 +632,36 @@ const partnerSettings = db => Object.assign({}, DEF_SETTINGS, (db.shared && db.s
 async function pushShared(newPin) {   // الدعم الفني يرسل الإعدادات والقطع المحفوظة ورمز مدخل البيانات (مشفّر)
   const db = loadDb(), sync = getSync();
   if (db.role !== 'admin' || !sync) return false;
-  const mine = newPin ? await hashPin(newPin) : (db.pins && db.pins.partner ? await hashPin(db.pins.partner) : '');
+  const mine = newPin ? await hashPin(newPin) : (db.pins && db.pins.partnerSH ? db.pins.partnerSH : (db.pins && db.pins.partner ? await hashPin(db.pins.partner) : ''));
   const data = { v: 1, settings: db.settings, catalog: db.catalog, mail: db.recMail || DEF_MAIL, updated: new Date().toISOString() };
   // لو مدخل البيانات اختار رقمه بنفسه، ما نرجّع الرقم القديم
   await updateJson(sync, 'shared.json', null, cur => Object.assign({}, data, { partnerHash: newPin ? mine : ((cur && cur.partnerHash) || mine), pinChangedTs: newPin ? Date.now() : ((cur && cur.pinChangedTs) || 0) }), 'إعدادات مشتركة');
   return true;
 }
 const pushSharedSoon = () => { pushShared().catch(() => {}); };
-// ===== نشر أرصدة نقاط الولاء للموقع (shop/points.json) — الجوال مشفّر (هاش)، والموقع يطابقه من جوال العميل =====
+// ===== نشر أرصدة نقاط الولاء للموقع (shop/points.json) =====
+// v47: المفتاح = PBKDF2-SHA256(الجوال، ملح ثابت للتطبيق، 300 ألف تكرار، 32 بايت hex) — نفس الحساب بالضبط في المتجر (shop/index.html ptsKey).
+// الملف فيه مفتاح ← نقاط فقط (بدون أسماء أو جوالات أو مبالغ).
 const PTS_REPO = 'rax3dsa/rax3dsa.github.io', PTS_PATH = 'shop/points.json';
-async function ptsHash(ph) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rax3d:' + ph)); return Array.from(new Uint8Array(b)).slice(0, 8).map(x => x.toString(16).padStart(2, '0')).join(''); }
+const PTS_SALT = 'RAX3D|loyalty-points|v2|7f3c9a1e', PTS_ITER = 300000, PTS_CACHE = 'rax3d_ptskeys';
+async function ptsKey(ph) { return hex(await pbkdf2(normPhone(ph), PTS_SALT, PTS_ITER, 256)); }
 async function publishPoints() {
   const sync = getSync(); if (!sync) throw new Error('اربط الترقيم المشترك أولاً (الإحصائيات ← الترقيم المشترك)');
   const bal = new Map();
-  (loadDb().log || []).forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9) return; bal.set(ph, (bal.get(ph) || 0) + Math.floor(+r.total || 0)); });
-  const p = {}; for (const [ph, v] of bal) if (v > 0) p[await ptsHash(ph)] = v;
-  const tgt = { repo: PTS_REPO, token: sync.token };
-  await updateJson(tgt, PTS_PATH, null, cur => (cur && JSON.stringify(cur.p) === JSON.stringify(p)) ? undefined : { updated: Date.now(), p: p }, 'تحديث أرصدة نقاط الولاء');
+  (loadDb().log || []).forEach(r => { if (!isLive(r)) return; const ph = normPhone(r.phone); if (ph.length < 9) return; bal.set(ph, (bal.get(ph) || 0) + Math.floor(+r.total || 0)); });
+  let cache = {}; try { cache = JSON.parse(localStorage.getItem(PTS_CACHE) || '{}') || {}; } catch (e) {}
+  const p = {}; for (const [ph, v] of bal) if (v > 0) { if (!cache[ph]) cache[ph] = await ptsKey(ph); p[cache[ph]] = v; }
+  try { localStorage.setItem(PTS_CACHE, JSON.stringify(cache)); } catch (e) {}
+  await publicWritePoints(sync.token, p);
+  try { localStorage.setItem('rax3d_pts_v', '2'); } catch (e) {}
   return Object.keys(p).length;
+}
+// ⚠️ هذي الكتابة الوحيدة على المستودع العام (الموقع rax3dsa.github.io) ومحصورة في ملف واحد: shop/points.json.
+// كل القراءة والكتابة الثانية تروح للمستودع الخاص فقط (gh() يرفض غيره). لو التوكن Fine-grained على rax3d-data بس،
+// هذي الخطوة بتفشل بهدوء (403) والأرصدة ما تتحدث بالموقع — وكل شي ثاني يشتغل عادي.
+async function publicWritePoints(token, p) {
+  const tgt = { repo: PTS_REPO, token: token, _public: PTS_PATH };
+  await updateJson(tgt, PTS_PATH, null, cur => (cur && cur.v === 2 && JSON.stringify(cur.p) === JSON.stringify(p)) ? undefined : { v: 2, updated: Date.now(), p: p }, 'تحديث أرصدة نقاط الولاء');
 }
 const publishPointsSoon = () => { publishPoints().catch(() => {}); };
 let flushing = null;
@@ -723,13 +796,13 @@ const API = {
     const notice = !!db.pinNotice;
     if (notice) { delete db.pinNotice; saveDb(db); }
     const S = db.settings;
-    const sales = db.log.reduce((a, r) => a + (Number(r.total) || 0), 0);
+    const sales = db.log.filter(isLive).reduce((a, r) => a + (Number(r.total) || 0), 0);
     const goal = goalFor(sales, S.goalStart), prev = goal === S.goalStart ? 0 : goal / 2;
     return {
-      settings: S, nextNum: db.nextNum, today: todayStr(), role: role, catalog: db.catalog, partnerSet: !!(db.pins && db.pins.partner), pinNotice: notice, recMail: db.recMail || DEF_MAIL,
+      settings: S, nextNum: db.nextNum, today: todayStr(), role: role, catalog: db.catalog, partnerSet: !!(db.pins && (db.pins.partner || db.pins.partnerSH)), pinNotice: notice, recMail: db.recMail || DEF_MAIL,
       log: db.log.map(r => Object.assign({}, r, { pdf: 'local' })),
       goal: { sales: R2(sales), goal: goal, prev: prev, remaining: R2(goal - sales), reached: prev,
-              gap: R2(db.log.reduce((a, r) => a + (r.sugg > 0 ? r.sugg - r.total : 0), 0)), gapCount: db.log.filter(r => r.sugg > 0).length }
+              gap: R2(db.log.filter(isLive).reduce((a, r) => a + (r.sugg > 0 ? r.sugg - r.total : 0), 0)), gapCount: db.log.filter(r => isLive(r) && r.sugg > 0).length }
     };
   },
   async saveFromApp(data, pin) {
@@ -742,14 +815,14 @@ const API = {
     let num;
     if (sync) { num = await reserveNumber(sync, db.nextNum); db = loadDb(); }
     else { num = db.nextNum; while (db.log.some(r => Number(r.num) === num)) num++; }
-    const lines = its.map(it => { const c = calcLocal(S, it); return { desc: String(it.desc).trim(), q: c.q, unit: c.unit, line: c.line, disc: c.disc, total: c.total, profit: c.profit, cost: R2(c.cost), sugg: (+it.price > 0) ? c.sugg * c.q : 0, w: +it.w || 0, h: +it.h || 0, m: +it.m || 0, sec: +it.sec || 0, type: it.type === 'مجموعة' ? 'مجموعة' : 'واحدة', auto: !(+it.price > 0) }; });
-    const before = db.log.reduce((a, r) => a + (Number(r.total) || 0), 0);
+    const lines = its.map(it => { const c = calcLocal(S, it); return { desc: String(it.desc).trim(), q: c.q, unit: c.unit, line: c.line, disc: c.disc, total: c.total, profit: c.profit, cost: R2(c.cost), sugg: (+it.price > 0) ? c.sugg * c.q : 0, w: +it.w || 0, h: +it.h || 0, m: +it.m || 0, sec: +it.sec || 0, type: it.type === 'مجموعة' ? 'مجموعة' : 'واحدة', auto: !(+it.price > 0), dp: Math.min(100, Math.max(0, +it.disc || 0)) }; });
+    const before = db.log.filter(isLive).reduce((a, r) => a + (Number(r.total) || 0), 0);
     const rec = {
       num: num, date: todayStr(), by: role, client: String(data.client || '').trim(), phone: String(data.phone || '').trim(), code: String(data.code || '').trim().slice(0, 20),
       desc: lines.map(l => l.desc + ' (' + l.q + ')').join(' ، '), qty: lines.reduce((a, l) => a + l.q, 0),
       disc: R2(lines.reduce((a, l) => a + l.disc, 0)), total: R2(lines.reduce((a, l) => a + l.total, 0)),
       profit: R2(lines.reduce((a, l) => a + l.profit, 0)), sugg: R2(lines.reduce((a, l) => a + l.sugg, 0)),
-      sub: R2(lines.reduce((a, l) => a + l.line, 0)), items: lines.map(l => ({ desc: l.desc, q: l.q, unit: l.unit, line: l.line, cost: l.cost, w: l.w, h: l.h, m: l.m, sec: l.sec, type: l.type, auto: l.auto }))
+      sub: R2(lines.reduce((a, l) => a + l.line, 0)), items: lines.map(l => ({ desc: l.desc, q: l.q, unit: l.unit, line: l.line, cost: l.cost, w: l.w, h: l.h, m: l.m, sec: l.sec, type: l.type, auto: l.auto, dp: l.dp }))
     };
     const cats = its.map(it => ({ desc: String(it.desc).trim(), w: +it.w || 0, h: +it.h || 0, m: +it.m || 0, sec: +it.sec || 0, price: +it.price > 0 ? +it.price : 0 }));
     db.log.push(rec); db.nextNum = Math.max(db.nextNum, num + 1);
@@ -767,15 +840,15 @@ const API = {
     const db = await adminDb(pin);
     const a = String((d && d.admin) || '').trim();
     if (!/^[0-9]{4,12}$/.test(a)) throw new Error('الرمز لازم يكون أرقام من 4 إلى 12 خانة');
-    if (db.pins.partner && a === db.pins.partner) throw new Error('رمز الدعم الفني لازم يختلف عن رمز مدخل البيانات');
-    db.pins.admin = a; saveDb(db); return true;
+    if ((db.pins.partner && a === db.pins.partner) || (db.pins.partnerSH && (await hashPin(a)) === db.pins.partnerSH)) throw new Error('رمز الدعم الفني لازم يختلف عن رمز مدخل البيانات');
+    db.pins.adminH = await pinHashNew(a); delete db.pins.admin; PIN_MEMO = null; saveDb(db); return true;
   },
   async setPartnerPin(d, pin) {
     const db = await adminDb(pin);
     const p = String((d && d.pin) || '').trim();
     if (!/^[0-9]{4,12}$/.test(p)) throw new Error('الرمز لازم يكون أرقام من 4 إلى 12 خانة');
-    if (p === db.pins.admin) throw new Error('رمز مدخل البيانات لازم يختلف عن رمز الدعم الفني');
-    db.pins.partner = p; saveDb(db);
+    if (await adminPinOk(db, p)) throw new Error('رمز مدخل البيانات لازم يختلف عن رمز الدعم الفني');
+    db.pins.partnerSH = await hashPin(p); delete db.pins.partner; saveDb(db);
     if (!getSync()) return { synced: false };
     await pushShared(p); return { synced: true };
   },
@@ -784,7 +857,8 @@ const API = {
     if (d.off) { setSync(null); return 'off'; }
     const repo = String(d.repo || '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/+$/, '');
     const token = String(d.token || '').trim() || ((getSync() || {}).token || '');
-    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('اكتب اسم المستودع بهالشكل: RAX3D/rax3d-data');
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('اكتب اسم المستودع بهالشكل: rax3dsa/rax3d-data');
+    if (PUBLIC_REPO_RE.test(repo)) throw new Error('هذا مستودع الموقع العام — اكتب المستودع الخاص: rax3dsa/rax3d-data');
     if (!token) throw new Error('الصق رمز GitHub');
     const sync = { repo, token };
     const c = await readCounter(sync);
@@ -837,24 +911,23 @@ const API = {
     const p = String(d.pin || '').trim();
     if (!/^[0-9]{4,12}$/.test(p)) throw new Error('الرمز لازم يكون أرقام من 4 إلى 12 خانة');
     if (p !== String(d.pin2 || '').trim()) throw new Error('الرمزين مو متطابقين، اكتبه مرة ثانية');
-    db.pins.admin = p; db.fails = { n: 0, until: 0 }; db.recMail0 = null; db.pinNotice = true; delete db.recHash; saveDb(db);
+    db.pins = Object.assign({}, db.pins || {}, { adminH: await pinHashNew(p) }); delete db.pins.admin; PIN_MEMO = null; db.fails = { n: 0, until: 0 }; db.recMail0 = null; db.pinNotice = true; delete db.recHash; saveDb(db);
     notify('✅ تم استرجاع دخول الدعم الفني وتغيير الرمز', { 'التفاصيل': 'تم تغيير رمز دخول الدعم الفني عن طريق رمز التحقق من الإيميل' });
     return true;
   },
-  async makeJoinCode(pin) {
+  async makeJoinCode(pin, pass) {
     const db = await adminDb(pin), sync = getSync();
     if (!sync) throw new Error('فعّل الترقيم المشترك أولاً (فوق)');
+    if (String(pass || '').trim().length < 6) throw new Error('رمز الرابط لازم يكون 6 خانات أو أكثر');
     await pushShared();
-    return 'RAX3D-' + b64e(JSON.stringify({ r: sync.repo, t: sync.token }));
+    return sealJoin({ r: sync.repo, t: sync.token }, pass);   // v47: التوكن مشفّر، ما ينفتح إلا برمز الرابط
   },
   async joinPartner(d) {
     if (loadDb().role) throw new Error('هذا الجوال مُعد من قبل');
-    let j = null;
-    try { j = JSON.parse(b64d(decodeURIComponent(String(d.code || '').trim()).replace(/^RAX3D-/, ''))); } catch (e) {}
-    if (!j || !j.r || !j.t) throw new Error('رمز الربط غير صحيح — افتح الرابط من رسالة الدعم الفني مرة ثانية');
     const p = String(d.pin || '').trim();
     if (!/^[0-9]{4,12}$/.test(p)) throw new Error('الرقم السري لازم يكون أرقام من 4 إلى 12 خانة');
     if (p !== String(d.pin2 || '').trim()) throw new Error('الرقمين مو متطابقين، اكتبه مرة ثانية');
+    const j = await openJoin(d.code, d.pass);
     const sync = { repo: j.r, token: j.t };
     const c = await readJson(sync, 'shared.json', null);
     if (!c.data) throw new Error('الدعم الفني ما فعّل الترقيم المشترك بعد');
@@ -903,9 +976,7 @@ const API = {
     return true;
   },
   async resetByLink(d) {   // من رابط الدعم الفني في Safari
-    let j = null;
-    try { j = JSON.parse(b64d(decodeURIComponent(String(d.code || '')).replace(/^RAX3D-/, ''))); } catch (e) {}
-    if (!j || !j.r || !j.t) throw new Error('الرابط غير صحيح — اطلب رابط جديد من الدعم الفني');
+    const j = await openJoin(d.code, d.pass);
     await doReset({ repo: j.r, token: j.t }, d);
     return true;
   },
@@ -951,6 +1022,7 @@ const API = {
   async editInvoice(d, pin) {
     const db = await adminDb(pin), S = db.settings;
     const r = db.log.find(x => rk(x) === d.key); if (!r) throw new Error('الفاتورة غير موجودة');
+    if (!isLive(r)) throw new Error('الفاتورة ملغاة — ما تنعدّل');
     const old = r.items || [], sub0 = Number(r.sub) || old.reduce((a, i) => a + (+i.line || 0), 0), cost0 = (Number(r.total) || 0) - (Number(r.profit) || 0);
     let allW = true;
     const its = (d.items || []).map((it, i) => {
@@ -962,41 +1034,27 @@ const API = {
         cost = c.cost; sugg = c.sugg;
       } else { allW = false; cost = o.cost !== undefined ? +o.cost : (sub0 > 0 && +o.q ? cost0 * (+o.line || 0) / sub0 / +o.q : 0); }
       const auto = !!it.auto && w > 0, unit = auto ? sugg : Math.max(0, +it.unit || 0);
+      const dp = Math.min(100, Math.max(0, +it.dp || 0));   // v47: الخصم % لكل قطعة (نفس منطق إنشاء الفاتورة)
       return { desc: String(it.desc || '').trim() || o.desc || 'قطعة', q: q, unit: R2(unit), line: R2(unit * q), cost: R2(cost),
-        w: w, h: +it.h || 0, m: +it.m || 0, sec: +it.sec || 0, type: type, auto: auto, _s: sugg };
+        w: w, h: +it.h || 0, m: +it.m || 0, sec: +it.sec || 0, type: type, auto: auto, dp: dp, _d: R2(unit * q * dp / 100), _s: sugg };
     }).filter(it => it.q > 0);
     if (!its.length) throw new Error('لازم تبقى قطعة واحدة على الأقل');
-    const sub = R2(its.reduce((a, i) => a + i.line, 0)), disc = R2(Math.min(Math.max(0, +d.disc || 0), sub)), total = R2(sub - disc);
+    const sub = R2(its.reduce((a, i) => a + i.line, 0)), disc = R2(its.reduce((a, i) => a + i._d, 0)), total = R2(sub - disc);
     const sugg = allW ? R2(its.reduce((a, i) => a + (i.auto ? 0 : i._s * i.q), 0)) : r.sugg;
-    its.forEach(i => delete i._s);
+    its.forEach(i => { delete i._s; delete i._d; });
     Object.assign(r, { client: String(d.client || '').trim(), phone: String(d.phone || '').trim(), items: its, sub: sub, disc: disc, total: total, sugg: sugg,
       qty: its.reduce((a, i) => a + i.q, 0), desc: its.map(i => i.desc + ' (' + i.q + ')').join(' ، '),
       profit: R2(total - its.reduce((a, i) => a + i.cost * i.q, 0)), edited: todayStr() });
     saveDb(db); publishPointsSoon(); return true;
   },
-  async deleteInvoice(d, pin) {
+  async voidInvoice(d, pin) {   // v47: «إلغاء» بدل الحذف — الرقم يبقى، الحالة ملغاة، وتطلع من المجاميع والنقاط
     const db = await adminDb(pin);
-    const i = db.log.findIndex(x => rk(x) === d.key); if (i < 0) throw new Error('الفاتورة غير موجودة');
-    const N = Number(db.log[i].num);
-    db.log.splice(i, 1);
-    db.log.forEach(r => { if (Number(r.num) > N) r.num = Number(r.num) - 1; });   // الفواتير اللي بعدها تنزل رقم
-    db.nextNum = Math.max(1, db.nextNum - 1);
+    const r = db.log.find(x => rk(x) === d.key); if (!r) throw new Error('الفاتورة غير موجودة');
+    if (!isLive(r)) return { num: r.num };
+    r.status = 'ملغاة'; r.voidAt = todayStr();
     saveDb(db); publishPointsSoon();
-    const sync = getSync(); if (!sync) return { num: N, warn: '' };
-    try {
-      await updateJson(sync, 'counter.json', null, c => ({ next: Math.max(1, (c && Number(c.next) ? Number(c.next) : db.nextNum + 1) - 1) }), 'حذف الفاتورة ' + N);
-      await updateJson(sync, 'partner_log.json', [], arr => {
-        if (!Array.isArray(arr) || !arr.some(r => Number(r.num) > N)) return undefined;
-        arr.forEach(r => { if (Number(r.num) > N) r.num = Number(r.num) - 1; }); return arr;
-      }, 'تعديل الترقيم');
-      await updateJson(sync, 'requests.json', [], arr => {
-        if (!Array.isArray(arr) || !arr.some(r => Number(r.inv) > N)) return undefined;
-        arr.forEach(r => { if (Number(r.inv) > N) r.inv = Number(r.inv) - 1; }); return arr;
-      }, 'تعديل الترقيم');
-      return { num: N, warn: '' };
-    } catch (e) { return { num: N, warn: 'انحذفت من جوالك، لكن العدّاد المشترك ما تحدّث: ' + ((e && e.message) || e) + ' — عدّله من الترقيم المشترك' }; }
+    return { num: r.num };
   }
-
 };
 function callApi_(name, args, ctx) {
   setTimeout(() => {
@@ -1028,8 +1086,8 @@ function normPhone(v) { let d = String(v || '').replace(/[٠-٩]/g, c => '٠١٢
 function loyalty(phone, r) {   // يرجع { earned: نقاط هذي الفاتورة, balance: الرصيد حتى هذي الفاتورة (أو الحين لو ما فيه فاتورة) }
   const ph = normPhone(phone); if (ph.length < 9) return null;
   const log = (loadDb().log || []); let bal = 0;
-  for (const x of log) { if (normPhone(x.phone) === ph) bal += Math.floor(+x.total || 0); if (r && x === r) break; if (r && rk(x) === rk(r)) break; }
-  return { earned: r ? Math.floor(+r.total || 0) : 0, balance: bal };
+  for (const x of log) { if (isLive(x) && normPhone(x.phone) === ph) bal += Math.floor(+x.total || 0); if (r && x === r) break; if (r && rk(x) === rk(r)) break; }
+  return { earned: r && isLive(r) ? Math.floor(+r.total || 0) : 0, balance: bal };
 }
 function drawInvoice(r, logo) {
   const W = 1240, H = 1754, M = 80, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
@@ -1159,6 +1217,21 @@ function invoicePdf(r, stamp) {
     return { blob: jpegToPdf({ bytes, w: cv.width, h: cv.height }, 595.28, 841.89), preview: url };
   });
 }
+// ===== v47: نسخة سحابية تلقائية للسجل في المستودع الخاص: backups/<الحساب>/log.json (بعد كل حفظ، بتأخير بسيط) =====
+// بدون أي أسرار (لا رموز ولا توكن). تفشل بهدوء وتطلع علامة صغيرة ☁️⚠ وتنعاد مع الحفظ الجاي أو لما يرجع النت.
+var bkTimer = null, bkLast = '', bkBusy = false;
+function cloudBackupSoon() { clearTimeout(bkTimer); bkTimer = setTimeout(cloudBackup, 5000); }
+function cloudInd(ok) { const el = document.getElementById('cloudInd'); if (!el) return; el.hidden = false; el.textContent = ok ? '☁️✔' : '☁️⚠'; el.title = ok ? 'آخر نسخة سحابية ' + nowStr() : 'ما انحفظت النسخة السحابية — بنحاول بعدين'; }
+async function cloudBackup() {
+  const sync = getSync(), db = loadDb(); if (!sync || !db.role) return;
+  if (bkBusy) { cloudBackupSoon(); return; }
+  const data = { v: 1, app: APP_VERSION, role: db.role, nextNum: db.nextNum, settings: db.settings, catalog: db.catalog, log: db.log, pending: db.pending };
+  const body = JSON.stringify(data); if (body === bkLast) return;
+  bkBusy = true;
+  try { await updateJson(sync, 'backups/' + db.role + '/log.json', null, () => Object.assign({ savedAt: new Date().toISOString() }, data), 'نسخة تلقائية للسجل'); bkLast = body; cloudInd(true); }
+  catch (e) { cloudInd(false); } finally { bkBusy = false; }
+}
+addEventListener('online', () => cloudBackupSoon());
 </script>
 <script>
 let S = null, DATA = null, items = [];
@@ -1305,10 +1378,10 @@ $('doneNew').onclick = () => $('done').classList.remove('on');
 
 function resetForm() { ORDER = null; if ($('ptsHint')) $('ptsHint').textContent = '⭐ نقاط الولاء تظهر هنا'; $('client').value = ''; $('phone').value = ''; items = [newItem()]; renderItems(); }
 
-const pts = r => normPhone(r.phone).length >= 9 ? Math.floor(+r.total || 0) : 0;   // نقاط الفاتورة: ريال = نقطة (للفواتير اللي فيها جوال)
+const pts = r => isLive(r) && normPhone(r.phone).length >= 9 ? Math.floor(+r.total || 0) : 0;   // نقاط الفاتورة: ريال = نقطة (للفواتير اللي فيها جوال)
 function loyaltyCard() {   // ترتيب العملاء حسب رصيد نقاط الولاء
   const m = new Map();
-  DATA.log.forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9) return; const c = m.get(ph) || { ph, name: '', pts: 0, n: 0 }; c.pts += pts(r); c.n++; if (r.client) c.name = r.client; m.set(ph, c); });
+  DATA.log.forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9 || !isLive(r)) return; const c = m.get(ph) || { ph, name: '', pts: 0, n: 0 }; c.pts += pts(r); c.n++; if (r.client) c.name = r.client; m.set(ph, c); });
   const list = [...m.values()].sort((a, b) => b.pts - a.pts);
   const total = list.reduce((a, c) => a + c.pts, 0);
   return `<div class="period"><h3>⭐ نقاط الولاء</h3><div class="kv"><div>العملاء<b>${list.length}</b></div><div>إجمالي النقاط<b>${total}</b></div><div>ريال = نقطة<b>1</b></div></div>
@@ -1321,10 +1394,10 @@ function renderLog() {
     (r.client + ' ' + r.phone + ' ' + r.num + ' ' + r.desc + ' ' + (r.code || '')).toLowerCase().includes(q));
   $('logList').innerHTML = rows.length ? rows.map(r => `
     <div class="row">
-      <div class="row-h"><b>${esc(r.client || 'بدون اسم')}${r.by === 'partner' ? '<span class="tag p">📝 مدخل البيانات</span>' : ''}${r.edited ? '<span class="tag">معدّلة</span>' : ''}${pts(r) ? '<span class="tag" style="color:var(--gold)">⭐ +' + pts(r) + '</span>' : ''}</b><span class="amt">${fmt(r.total)} ريال</span></div>
+      <div class="row-h"><b>${esc(r.client || 'بدون اسم')}${r.by === 'partner' ? '<span class="tag p">📝 مدخل البيانات</span>' : ''}${r.edited ? '<span class="tag">معدّلة</span>' : ''}${!isLive(r) ? '<span class="tag" style="color:var(--bad);border-color:var(--bad)">🚫 ملغاة</span>' : ''}${pts(r) ? '<span class="tag" style="color:var(--gold)">⭐ +' + pts(r) + '</span>' : ''}</b><span class="amt"${!isLive(r) ? ' style="text-decoration:line-through;opacity:.55"' : ''}>${fmt(r.total)} ريال</span></div>
       <p>${esc(r.desc)}</p>
       <div class="meta"><span><b dir="ltr" style="color:var(--gold)">ORD-${esc(r.num)}</b> &nbsp; ${esc(r.date)}${r.phone ? ' &nbsp; ' + esc(r.phone) : ''}${r.code ? ' &nbsp; <span dir="ltr">' + esc(r.code) + '</span>' : ''}</span>
-      <span class="acts"><button class="pdf dl adm" data-ed="${esc(rk(r))}">✏️ تعديل</button><button class="pdf" data-dl="1" data-num="${esc(rk(r))}">📄 PDF</button></span></div>
+      <span class="acts">${isLive(r) ? `<button class="pdf dl adm" data-ed="${esc(rk(r))}">✏️ تعديل</button>` : ''}<button class="pdf" data-dl="1" data-num="${esc(rk(r))}">📄 PDF</button></span></div>
     </div>`).join('')
     : `<div class="empty">${oq ? 'ما فيه طلب برقم ORD-' + esc(oq) : q ? 'لا توجد فاتورة تطابق البحث' : 'لا توجد فواتير بعد. احفظ أول فاتورة من تبويب «فاتورة جديدة».'}</div>`;
 }
@@ -1337,7 +1410,7 @@ function lastMonths(n) {   // آخر n أشهر (حتى لو ما فيها مب�
   for (let k = n - 1; k >= 0; k--) { const d = new Date(y, m - 1 - k, 1); out.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')); }
   return out;
 }
-function monthTotals(ym) { const rs = DATA.log.filter(r => String(r.date).startsWith(ym)); return { n: rs.length, sales: rs.reduce((a, r) => a + (+r.total || 0), 0), profit: rs.reduce((a, r) => a + (+r.profit || 0), 0) }; }
+function monthTotals(ym) { const rs = DATA.log.filter(r => isLive(r) && String(r.date).startsWith(ym)); return { n: rs.length, sales: rs.reduce((a, r) => a + (+r.total || 0), 0), profit: rs.reduce((a, r) => a + (+r.profit || 0), 0) }; }
 function chartSvg(labels, a, b) {   // أعمدة: المبيعات (ذهبي) وصافي الربح (أخضر)
   const W = 340, H = 190, top = 22, base = 166, n = labels.length, slot = (W - 20) / n, bw = Math.min(18, slot / 2 - 4);
   const max = Math.max(1, ...a, ...b), hgt = v => Math.max(0, v) / max * (base - top);
@@ -1372,7 +1445,7 @@ function renderStats() {
     ['الإجمالي', () => true]
   ];
   $('statList').innerHTML = statsChartHtml() + periods.map(([name, f]) => {
-    const rs = DATA.log.filter(f), s = k => rs.reduce((a, r) => a + r[k], 0);
+    const rs = DATA.log.filter(r => isLive(r) && f(r)), s = k => rs.reduce((a, r) => a + r[k], 0);
     return `<div class="period"><h3>${name}</h3><div class="kv">
       <div>الفواتير<b>${rs.length}</b></div><div>القطع<b>${s('qty')}</b></div><div>المبيعات<b>${fmt(s('total'))}</b></div>
       <div>الخصومات<b>${fmt(s('disc'))}</b></div><div>صافي الربح<b>${fmt(s('profit'))}</b></div>
@@ -1519,7 +1592,7 @@ const safeName = t => String(t).replace(/[\\/:*?"<>|]+/g, '-').trim();
 function fetchPdf(num, cb) {
   const db = loadDb(), id = String(num), r = id.indexOf(':') > 0 ? db.log.find(x => rk(x) === id) : db.log.slice().reverse().find(x => String(x.num) === id);
   if (!r) { cb(new Error('الفاتورة غير موجودة')); return; }
-  invoicePdf(r).then(o => cb(null, o.blob, safeName('فاتورة ' + r.num + (r.client ? ' - ' + r.client : '') + '.pdf'), o.preview))
+  invoicePdf(r, isLive(r) ? null : { label: 'ملغاة', sub: 'تاريخ الإلغاء ' + (r.voidAt || '') }).then(o => cb(null, o.blob, safeName('فاتورة ' + r.num + (r.client ? ' - ' + r.client : '') + '.pdf'), o.preview))
     .catch(e => cb(e));
 }
 let readyFile = null;
@@ -1569,7 +1642,7 @@ $('logList').addEventListener('click', e => {
 function buildLogXlsx(log, title) {
   const admin = DATA.role === 'admin';
   const head = ['رقم الفاتورة', 'التاريخ', 'اسم العميل', 'الجوال', 'نقاط الولاء', 'الوصف', 'العدد', 'الخصم', 'المجموع النهائي'].concat(admin ? ['صافي الربح', 'السعر المقترح'] : []);
-  const rows = log.map(r => [Number(r.num) || r.num, r.date, r.client, r.phone, pts(r), r.desc, r.qty, r.disc, r.total].concat(admin ? [r.profit, r.sugg || ''] : []));
+  const rows = log.map(r => { const v = isLive(r); return [Number(r.num) || r.num, r.date, r.client, r.phone, pts(r), (v ? '' : '[ملغاة] ') + r.desc, r.qty, v ? r.disc : 0, v ? r.total : 0].concat(admin ? [v ? r.profit : 0, r.sugg || ''] : []); });
   return makeXlsx([{ name: title || 'سجل الفواتير', rows: [head].concat(rows), cols: [11, 12, 20, 14, 11, 40, 8, 10, 14].concat(admin ? [12, 13] : []) }]);
 }
 $('dlLog').onclick = () => {
@@ -1581,7 +1654,7 @@ const statLine = (name, rs) => [name, rs.length, sumK(rs, 'qty'), sumK(rs, 'tota
 const STAT_HEAD = ['الفترة', 'الفواتير', 'القطع', 'المبيعات', 'الخصومات', 'صافي الربح', 'متوسط الفاتورة'];
 const CHART_SERIES = [{ col: 3, color: 'E0B64A' }, { col: 5, color: '4CAF50' }];
 function monthsSheet() {
-  const L = DATA.log, months = [...new Set(L.map(r => String(r.date).slice(0, 7)).concat(lastMonths(6)))].sort().map(mo => statLine(monthName(mo), L.filter(r => String(r.date).startsWith(mo))));
+  const L = DATA.log.filter(isLive), months = [...new Set(L.map(r => String(r.date).slice(0, 7)).concat(lastMonths(6)))].sort().map(mo => statLine(monthName(mo), L.filter(r => String(r.date).startsWith(mo))));
   return { name: 'حسب الشهر', rows: [['الشهر'].concat(STAT_HEAD.slice(1))].concat(months), cols: [16, 10, 10, 13, 12, 13, 15],
     chart: { title: 'المبيعات وصافي الربح حسب الشهر', rows: months.map((_, k) => k + 1), series: CHART_SERIES } };
 }
@@ -1589,7 +1662,7 @@ function buildStatsXlsx() {
   const t = DATA.today, [y, m] = t.split('-');
   const d0 = new Date(t + 'T00:00:00'); d0.setDate(d0.getDate() - 6);
   const wk = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
-  const L = DATA.log;
+  const L = DATA.log.filter(isLive);
   const periods = [statLine('اليوم', L.filter(r => r.date === t)), statLine('آخر 7 أيام', L.filter(r => r.date >= wk && r.date <= t)),
     statLine('هذا الشهر', L.filter(r => r.date.startsWith(y + '-' + m))), statLine('هذه السنة', L.filter(r => r.date.startsWith(y))), statLine('الإجمالي', L)];
   const g = DATA.goal || {};
@@ -1601,7 +1674,7 @@ function buildStatsXlsx() {
   ]);
 }
 function buildMonthStatsXlsx(ym) {   // إحصائيات شهر معيّن: كل يوم + الإجمالي + رسم بياني
-  const rs = DATA.log.filter(r => String(r.date).startsWith(ym));
+  const rs = DATA.log.filter(r => isLive(r) && String(r.date).startsWith(ym));
   const days = [...new Set(rs.map(r => r.date))].sort().map(d => statLine(d, rs.filter(r => r.date === d)));
   const rows = [['اليوم'].concat(STAT_HEAD.slice(1))].concat(days.length ? days : [['لا توجد فواتير في هذا الشهر']], [statLine('إجمالي ' + monthName(ym), rs)]);
   const g = DATA.goal || {};
@@ -1623,7 +1696,7 @@ $('dlStats').onclick = () => {
 const ymOf = d => String(d).slice(0, 7);
 const ymAdd = (ym, k) => { const [y, m] = ym.split('-').map(Number), d = new Date(y, m - 1 + k, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
 async function sendMonthlyReport(ym, manual) {
-  const rs = DATA.log.filter(r => String(r.date).startsWith(ym));
+  const rs = DATA.log.filter(r => isLive(r) && String(r.date).startsWith(ym));
   const en = ym, files = [
     { blob: buildMonthStatsXlsx(ym), name: 'RAX3D-Statistics-' + en + '.xlsx' },
     { blob: buildLogXlsx(rs, 'سجل ' + monthName(ym)), name: 'RAX3D-Invoices-Log-' + en + '.xlsx' }
@@ -1683,10 +1756,12 @@ $('setSave').onclick = () => {
     .saveSettings(d, PIN);
 };
 $('backupBtn').onclick = () => {
-  const raw = localStorage.getItem(DB_KEY) || '{}';
+  // v47: النسخة بدون أي أسرار (الرموز، محاولات الدخول، رمز الاسترجاع، الإعدادات المشتركة فيها هاش رمز مدخل البيانات). التوكن أصلاً منفصل.
+  const raw = JSON.stringify(backupCopy(loadDb()));
   deliverFile(new Blob([raw], { type: 'application/json' }), 'نسخة RAX3D ' + todayStr() + '.json')
     .catch(e => alert('تعذّر الحفظ: ' + ((e && e.message) || e)));
 };
+function backupCopy(d) { const c = Object.assign({}, d); ['pins', 'fails', 'recMail0', 'shared', 'pinNotice', 'recHash'].forEach(k => delete c[k]); return c; }
 $('restoreBtn').onclick = () => $('restoreIn').click();
 $('restoreIn').onchange = () => {
   const f = $('restoreIn').files[0]; if (!f) return; const msg = $('restoreMsg');
@@ -1696,7 +1771,9 @@ $('restoreIn').onchange = () => {
     if (!confirm('بيتم استبدال كل بيانات هذا الجوال بـ ' + d.log.length + ' فاتورة من الملف. متأكد؟')) return;
     localStorage.setItem(DB_KEY, JSON.stringify(d));
     msg.style.color = 'var(--good)'; msg.textContent = 'تم الاسترجاع ✔';
-    if (!d.role && d.pins && d.pins.admin) d.role = 'admin'; localStorage.setItem(DB_KEY, JSON.stringify(d)); if (d.pins && d.pins.admin) savePin(d.pins.admin); load();
+    const cur = loadDb(); ['pins', 'role', 'shared', 'fails'].forEach(k => { if (d[k] === undefined || d[k] === null) d[k] = cur[k]; });   // نسخة v47 ما فيها رموز: نخلي رموز هذا الجوال
+    if (!d.role && d.pins && (d.pins.admin || d.pins.adminH)) d.role = 'admin'; localStorage.setItem(DB_KEY, JSON.stringify(d)); if (d.pins && d.pins.admin) savePin(d.pins.admin);
+    migratePins().catch(() => {}).then(() => load());
   }).catch(e => { msg.style.color = 'var(--bad)'; msg.textContent = 'تعذّر الاسترجاع: ' + ((e && e.message) || e); })
     .finally(() => { $('restoreIn').value = ''; });
 };
@@ -1764,7 +1841,7 @@ function doFirstRun() {
         load(); setInterval(() => { if (!document.hidden) checkReset(); }, 45000);
       })
       .withFailureHandler(e => { btn.disabled = false; $('pinErr').textContent = (e && e.message) || e; })
-      .joinPartner({ code: $('fJoin').value, pin: p1, pin2: p2 });
+      .joinPartner({ code: $('fJoin').value, pass: $('fJP').value, pin: p1, pin2: p2 });
     return;
   }
   const a = $('fAdmin').value.trim(), pp = '', n = Math.floor(+$('fNum').value) || 1;
@@ -1772,7 +1849,8 @@ function doFirstRun() {
   if (pp && !/^[0-9]{4,12}$/.test(pp)) { $('pinErr').textContent = 'رمز مدخل البيانات لازم يكون أرقام من 4 إلى 12 خانة'; return; }
   if (pp && pp === a) { $('pinErr').textContent = 'رمز مدخل البيانات لازم يختلف عن رمز الدعم الفني'; return; }
   const db = loadDb(); db.role = 'admin'; db.pins = pp ? { admin: a, partner: pp } : { admin: a }; db.nextNum = n > 0 ? n : 1; saveDb(db);
-  endFirstRun(); savePin(a); $('lock').classList.remove('on'); load();
+  endFirstRun(); savePin(a); $('lock').classList.remove('on');
+  migratePins().catch(() => {}).then(() => load());
 }
 function updateForgot() { $('forgotBtn').hidden = !loadDb().role; }
 
@@ -2091,10 +2169,12 @@ function renderNt() {
   }).join('');
 }
 function shareResetLink(id) {
+  const pass = askLinkPass(); if (!pass) return;
   google.script.run.withSuccessHandler(code => {
     const link = location.origin + location.pathname + '#reset=' + encodeURIComponent(id) + '&join=' + encodeURIComponent(code);
-    shareText('تمت الموافقة على طلب تغيير الرقم السري ✔\nافتح الرابط، واكتب رقمك الجديد مرتين، وبعدها ادخل التطبيق من الشاشة الرئيسية:\n' + link);
-  }).withFailureHandler(e => toast(errTxt(e))).makeJoinCode(PIN);
+    shareText('تمت الموافقة على طلب تغيير الرقم السري ✔\nافتح الرابط، واكتب «رمز الرابط» اللي بقوله لك، ورقمك الجديد مرتين، وبعدها ادخل التطبيق من الشاشة الرئيسية:\n' + link);
+    setTimeout(() => alert('لا تنسى: قل له «رمز الرابط» بالصوت أو برسالة منفصلة (مو مع الرابط).'), 400);
+  }).withFailureHandler(e => toast(errTxt(e))).makeJoinCode(PIN, pass);
 }
 function resolveReqX(d, done) {
   google.script.run.withSuccessHandler(list => { REQS = (list || []).slice().reverse(); lastNew = REQS.filter(x => x.status === 'new').length; renderBell(); renderNt(); done && done(); })
@@ -2138,9 +2218,12 @@ function edCalc(it) {
 function openEdit(key) {
   const r = DATA && DATA.log.find(x => rk(x) === key); if (!r) return;
   ED = { key: key, num: r.num, items: (r.items || []).map(i => ({ desc: i.desc, q: i.q, unit: i.unit, w: i.w || '', h: i.h || '', m: i.m || '', sec: i.sec || '',
-    type: i.type || 'واحدة', auto: i.auto === true })) };
+    type: i.type || 'واحدة', auto: i.auto === true, dp: i.dp !== undefined ? +i.dp || 0 : 0 })) };
+  if (!(r.items || []).some(i => i.dp !== undefined) && +r.disc > 0) {   // فاتورة قديمة: نوزّع خصمها كنسبة واحدة على كل القطع (نفس المجموع)
+    const sub = ED.items.reduce((a, i) => a + (+i.q || 0) * (+i.unit || 0), 0); if (sub > 0) ED.items.forEach(i => i.dp = +r.disc / sub * 100);
+  }
   $('edTitle').textContent = 'تعديل الفاتورة رقم ' + r.num + (r.by === 'partner' ? ' (مدخل البيانات)' : '');
-  $('edClient').value = r.client || ''; $('edPhone').value = r.phone || ''; $('edDisc').value = r.disc || 0; setMsg('edMsg', null, '');
+  $('edClient').value = r.client || ''; $('edPhone').value = r.phone || ''; setMsg('edMsg', null, '');
   renderEdItems(); $('edSheet').classList.add('on');
 }
 function renderEdItems() {
@@ -2154,6 +2237,7 @@ function renderEdItems() {
       <div><label>النوع</label><div class="seg"><button data-type="واحدة" class="${it.type === 'واحدة' ? 'on' : ''}">واحدة</button><button data-type="مجموعة" class="${it.type === 'مجموعة' ? 'on' : ''}">مجموعة / جملة</button></div></div>
       <div><label>العدد</label><input data-k="q" type="number" inputmode="numeric" value="${esc(it.q)}"></div>
       <div><label>سعر الوحدة</label><input data-k="unit" type="number" inputmode="decimal" value="${esc(it.unit)}"></div></div>
+    <div style="margin-top:8px"><label>خصم %</label><input data-k="dp" type="number" inputmode="decimal" value="${esc(fmt(+it.dp || 0))}"></div>
     <div class="hint" id="eh${i}"></div></div>`).join('');
   edSum();
 }
@@ -2164,8 +2248,9 @@ function edSum() {
     h.innerHTML = !c ? 'اكتب الوزن والوقت عشان يتحسب السعر المقترح والربح بدقة'
       : `التكلفة ${fmt(c.cost)} · المقترح ${fmt(c.sugg)} · ${it.auto ? 'السعر تلقائي' : 'سعر مخصص'}${+it.unit < c.cost ? ' <b style="color:var(--bad)">⚠️ أقل من التكلفة</b>' : ''}`;
   });
-  const sub = ED.items.reduce((a, i) => a + Math.max(0, Math.floor(+i.q || 0)) * Math.max(0, +i.unit || 0), 0);
-  const disc = Math.min(Math.max(0, +$('edDisc').value || 0), sub);
+  const ln = i => Math.max(0, Math.floor(+i.q || 0)) * Math.max(0, +i.unit || 0);
+  const sub = ED.items.reduce((a, i) => a + ln(i), 0);
+  const disc = ED.items.reduce((a, i) => a + r2(ln(i) * Math.min(100, Math.max(0, +i.dp || 0)) / 100), 0);
   $('edSum').textContent = 'المجموع الجديد: ' + fmt(sub - disc) + ' ريال';
 }
 $('edItems').addEventListener('input', e => {
@@ -2178,31 +2263,30 @@ $('edItems').addEventListener('click', e => {
   const b = e.target.closest('[data-type]'); if (!b) return;
   ED.items[+b.closest('.ed-it').dataset.i].type = b.dataset.type; renderEdItems();
 });
-$('edDisc').oninput = edSum;
 $('edClose').onclick = () => $('edSheet').classList.remove('on');
 $('edDel').onclick = () => {
   const n = ED.num;
-  if (!confirm('حذف الفاتورة رقم ' + n + ' نهائياً؟\n\nالفواتير اللي بعدها بتنزل رقم واحد (' + (Number(n) + 1) + ' تصير ' + n + ' وهكذا) والإحصائيات بتتحدث.\nالفواتير اللي أرسلتها للعملاء قبل تبقى بأرقامها القديمة عندهم.')) return;
+  if (!confirm('إلغاء الفاتورة رقم ' + n + '؟\n\nالرقم يبقى محجوز وما يتغير أي رقم ثاني. الفاتورة تبقى بالسجل بختم «ملغاة» وتطلع من المبيعات والإحصائيات ونقاط الولاء.')) return;
   const btn = $('edDel'); btn.disabled = true;
   const old = DATA.log.find(x => rk(x) === ED.key);
   google.script.run
-    .withSuccessHandler(r => { btn.disabled = false; $('edSheet').classList.remove('on'); if (r.warn) alert(r.warn); toast('🗑️ انحذفت الفاتورة ' + r.num + ' وتعدّل الترقيم'); mailedFiles.clear();
-      if (old) {   // نسخة PDF من الفاتورة المحذوفة وعليها ختم «تم الحذف»
-        const subj = '🗑️ حذف الفاتورة رقم ' + old.num + (old.client ? ' — ' + old.client : '');
-        invoicePdf(old, { label: 'تم الحذف', sub: 'تاريخ الحذف ' + todayStr() })
-          .then(o => mailFile(o.blob, safeName('فاتورة ' + old.num + (old.client ? ' - ' + old.client : '') + ' - محذوفة.pdf'), subj, { msg: '🗑️ مرفق نسخة الفاتورة رقم ' + old.num + ' المحذوفة بصيغة PDF' }))
-          .catch(() => notify(subj, { 'الرسالة': 'تم حذف الفاتورة رقم ' + old.num }));
+    .withSuccessHandler(r => { btn.disabled = false; $('edSheet').classList.remove('on'); toast('🚫 انلغت الفاتورة ' + r.num + ' (رقمها باقي)'); mailedFiles.clear();
+      if (old) {   // نسخة PDF من الفاتورة الملغاة وعليها ختم «ملغاة»
+        const subj = '🚫 إلغاء الفاتورة رقم ' + old.num + (old.client ? ' — ' + old.client : '');
+        invoicePdf(old, { label: 'ملغاة', sub: 'تاريخ الإلغاء ' + todayStr() })
+          .then(o => mailFile(o.blob, safeName('فاتورة ' + old.num + (old.client ? ' - ' + old.client : '') + ' - ملغاة.pdf'), subj, { msg: '🚫 مرفق نسخة الفاتورة رقم ' + old.num + ' الملغاة بصيغة PDF' }))
+          .catch(() => notify(subj, { 'الرسالة': 'تم إلغاء الفاتورة رقم ' + old.num }));
       }
       load(); })
     .withFailureHandler(e => { btn.disabled = false; if (pinError(e)) return; setMsg('edMsg', false, errTxt(e)); })
-    .deleteInvoice({ key: ED.key }, PIN);
+    .voidInvoice({ key: ED.key }, PIN);
 };
 $('edSave').onclick = () => {
   const btn = $('edSave'); btn.disabled = true;
   google.script.run
     .withSuccessHandler(() => { btn.disabled = false; $('edSheet').classList.remove('on'); toast('تم تعديل الفاتورة ✔'); mailedFiles.clear(); mailInvoice(ED.key, 'edit'); load(); })
     .withFailureHandler(e => { btn.disabled = false; if (pinError(e)) return; setMsg('edMsg', false, errTxt(e)); })
-    .editInvoice({ key: ED.key, client: $('edClient').value, phone: $('edPhone').value, items: ED.items, disc: $('edDisc').value }, PIN);
+    .editInvoice({ key: ED.key, client: $('edClient').value, phone: $('edPhone').value, items: ED.items }, PIN);
 };
 
 // حساب مدخل البيانات (الإحصائيات)
@@ -2224,17 +2308,18 @@ $('pSave').onclick = () => {
     .setPartnerPin({ pin: v }, PIN);
 };
 $('joinBtn').onclick = () => {
+  const pass = askLinkPass(); if (!pass) return;
   setMsg('joinMsg', null, 'جاري التجهيز…');
   google.script.run
     .withSuccessHandler(code => {
       const link = location.origin + location.pathname + '#join=' + encodeURIComponent(code);
-      const t = 'تطبيق فواتير RAX3D 📝\n1) افتح الرابط من Safari:\n' + link + '\n2) زر المشاركة ← «إضافة إلى الشاشة الرئيسية»\n3) افتح التطبيق من الأيقونة، واختر رقمك السري واكتبه مرتين\n\nالرابط تستخدمه مرة وحدة بس، وبعدها تدخل برقمك السري.';
+      const t = 'تطبيق فواتير RAX3D 📝\n1) افتح الرابط من Safari:\n' + link + '\n2) زر المشاركة ← «إضافة إلى الشاشة الرئيسية»\n3) افتح التطبيق من الأيقونة، واكتب «رمز الرابط» اللي بقوله لك، واختر رقمك السري واكتبه مرتين\n\nالرابط تستخدمه مرة وحدة بس، وبعدها تدخل برقمك السري.';
       $('joinOut').value = link; $('joinOut').hidden = false;
-      setMsg('joinMsg', true, 'جاهز ✔ أرسل الرابط لمدخل البيانات فقط');
+      setMsg('joinMsg', true, 'جاهز ✔ أرسل الرابط بالواتساب، وقل له «رمز الرابط» بالصوت أو برسالة منفصلة');
       shareText(t);
     })
     .withFailureHandler(e => { if (pinError(e)) return; setMsg('joinMsg', false, errTxt(e)); })
-    .makeJoinCode(PIN);
+    .makeJoinCode(PIN, pass);
 };
 
 // --- مدخل البيانات: اختيار رقم سري جديد بعد موافقة الدعم الفني ---
@@ -2328,7 +2413,7 @@ $('lrSave').onclick = () => {
       if (navigator.vibrate) navigator.vibrate(80);
     })
     .withFailureHandler(e => { $('lrSave').disabled = false; setMsg('lrMsg', false, errTxt(e)); })
-    .resetByLink({ id: LR.id, code: LR.code, pin: a, pin2: b2 });
+    .resetByLink({ id: LR.id, code: LR.code, pass: $('lrP').value, pin: a, pin2: b2 });
 };
 
 // --- تحديث التطبيق تلقائياً لما ننزّل نسخة جديدة على GitHub ---
@@ -2355,6 +2440,9 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { ch
 setInterval(() => { if (!document.hidden) { checkUpdate(); applyUpdate(); } }, 5 * 60 * 1000);
 try { if (localStorage.getItem('rax3d_updated')) { localStorage.removeItem('rax3d_updated'); setTimeout(() => toast('✨ تم تحديث التطبيق لآخر نسخة'), 600); } } catch (e) {}
 
+// v47: ترحيل الرمز من نص صريح إلى هاش، وترحيل مفاتيح نقاط الولاء للصيغة الجديدة (مرة وحدة من جوال الدعم الفني)
+migratePins().catch(() => {});
+setTimeout(() => { try { if (loadDb().role === 'admin' && getSync() && localStorage.getItem('rax3d_pts_v') !== '2') publishPointsSoon(); } catch (e) {} }, 8000);
 if (LR) { $('boot').textContent = ''; $('linkReset').classList.add('on'); setTimeout(() => $('lr1').focus(), 80); }
 else {
   checkUpdate();

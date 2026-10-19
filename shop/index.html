@@ -288,11 +288,7 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
  <p><a href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener" dir="ltr">@rax3d.sa</a> · <a href="mailto:rax3d.sa@hotmail.com" dir="ltr">rax3d.sa@hotmail.com</a></p>
 </footer>
 
-<script src="lib/three.min.js"></script>
-<script src="lib/fflate.min.js"></script>
-<script src="lib/STLLoader.js"></script>
-<script src="lib/3MFLoader.js"></script>
-<script src="lib/OrbitControls.js"></script>
+<!-- three.js + loaders load on demand the first time the 3D viewer opens (load3D below) -->
 <script src="lib/gsap.min.js"></script>
 <script src="lib/ScrollTrigger.min.js"></script>
 <script src="lib/lenis.min.js"></script>
@@ -486,7 +482,17 @@ function syncDims(skip){setTimeout(sumUI,0);
  else{m.className="dmsg";m.textContent=cur.it.d&&dimsValid()?"المقاس الجديد: "+cur.dim.map(fmt).join(" × ")+" مم":"أقصى مقاس لكل محور "+MAXD+" مم."}}
 /* ---------- 3D viewer: the print file itself, so every colour is exact ---------- */
 const V={};
+/* lazy-load: three.js and its loaders are fetched only when a 3D view is first needed, in order */
+let L3D=null;
+function load3D(){if(window.THREE&&THREE.OrbitControls)return Promise.resolve();if(L3D)return L3D;
+ const one=src=>new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.async=false;s.onload=ok;s.onerror=()=>no(new Error(src));document.head.appendChild(s)});
+ L3D=["lib/three.min.js","lib/fflate.min.js","lib/STLLoader.js","lib/3MFLoader.js","lib/OrbitControls.js"].reduce((p,src)=>p.then(()=>one(src)),Promise.resolve()).catch(e=>{L3D=null;throw e});return L3D}
 function open3D(){
+ if(!cur||!MODELS[cur.it.id])return;
+ if(!(window.THREE&&THREE.OrbitControls)){const id=cur.it.id,b=$("#v3dOpen");if(b)b.setAttribute("aria-busy","true");
+  load3D().then(()=>{if(b)b.removeAttribute("aria-busy");if(cur&&cur.it.id===id)open3D_()}).catch(()=>{if(b)b.removeAttribute("aria-busy");const m=$("#v3dMsg");if(m){m.hidden=false;m.textContent="ما قدرنا نحمّل عارض 3D، جرّب مرة ثانية."}});return}
+ open3D_()}
+function open3D_(){
  if(!window.THREE||!cur)return;const m=MODELS[cur.it.id];if(!m)return;
  const st0=$("#v3dStage");if(!st0)return;if(V.on&&V.id===cur.it.id&&!st0.hidden){close3D();return}
  st0.hidden=false;$("#pv").style.visibility="hidden";V.on=true;
@@ -571,8 +577,8 @@ function cartUI(){if(!cart.length)OREF="";$("#cartN").textContent=cart.reduce((a
 let OREF="";
 function orderCode(){if(!OREF){const A="ABCDEFGHJKMNPQRSTUVWXYZ23456789",r=new Uint32Array(5);crypto.getRandomValues(r);OREF="RX-"+[...r].map(x=>A[x%A.length]).join("")}return OREF}
 function sizeText(o,en){if(o.size)return o.size+(en?" mm":" مم");const it=ITEMS.find(i=>i.id===o.id);return it&&it.d?(en?"Original — ":"الأصلي — ")+it.d.join(" × ")+(en?" mm":" مم"):(en?"Original":"الأصلي")}
-function msgEN(){return "Hello RAX3D 👋\n\nI'd like to order the following:\n"+(CUST?`\n* Name: ${CUST.n}\n* Mobile: ${CUST.p}\n`:"")+cart.map(o=>`\n* Piece: ${tr(o.name)}\n* Colour: ${tr(o.color)}\n* Size: ${sizeText(o,true)}\n* Quantity: ${o.qty}${isW(o)?" (wholesale)":""}${UP(o.id,o.qty)?`\n* Price: ${LT(o)} SAR`:""}\n* Extra options: ${o.note||"None"}`).join("\n")+(cart.some(o=>UP(o.id,o.qty))?`\n\nTotal: ${cart.reduce((a,o)=>a+LT(o),0)} SAR`:"")+"\n\nThank you."}
-function msg(){if(LANG==="en")return msgEN();return "مرحبًا RAX3D 👋\n\nأرغب في طلب القطعة التالية:\n"+(CUST?`\n* الاسم: ${CUST.n}\n* الجوال: ${CUST.p}\n`:"")+cart.map(o=>`\n* القطعة: ${o.name}\n* اللون: ${o.color}\n* المقاس: ${sizeText(o)}\n* الكمية: ${o.qty}${isW(o)?" (جملة)":""}${UP(o.id,o.qty)?`\n* السعر: ${LT(o)} ريال`:""}\n* خيارات إضافية: ${o.note||"لا يوجد"}`).join("\n")+(cart.some(o=>UP(o.id,o.qty))?`\n\nالإجمالي: ${cart.reduce((a,o)=>a+LT(o),0)} ريال`:"")+"\n\nشكرًا لكم."}
+function msgEN(){return "Hello RAX3D 👋\n\nI'd like to order the following:\n\n* Order code: "+orderCode()+"\n"+(CUST?`\n* Name: ${CUST.n}\n* Mobile: ${CUST.p}\n`:"")+cart.map(o=>`\n* Piece: ${tr(o.name)}\n* Colour: ${tr(o.color)}\n* Size: ${sizeText(o,true)}\n* Quantity: ${o.qty}${isW(o)?" (wholesale)":""}${UP(o.id,o.qty)?`\n* Price: ${LT(o)} SAR`:""}\n* Extra options: ${o.note||"None"}`).join("\n")+(cart.some(o=>UP(o.id,o.qty))?`\n\nTotal: ${cart.reduce((a,o)=>a+LT(o),0)} SAR`:"")+"\n\nThank you."}
+function msg(){if(LANG==="en")return msgEN();return "مرحبًا RAX3D 👋\n\nأرغب في تقديم الطلب التالي:\n\n* رقم الطلب: "+orderCode()+"\n"+(CUST?`\n* الاسم: ${CUST.n}\n* الجوال: ${CUST.p}\n`:"")+cart.map(o=>`\n* القطعة: ${o.name}\n* اللون: ${o.color}\n* المقاس: ${sizeText(o)}\n* الكمية: ${o.qty}${isW(o)?" (جملة)":""}${UP(o.id,o.qty)?`\n* السعر: ${LT(o)} ريال`:""}\n* خيارات إضافية: ${o.note||"لا يوجد"}`).join("\n")+(cart.some(o=>UP(o.id,o.qty))?`\n\nالإجمالي: ${cart.reduce((a,o)=>a+LT(o),0)} ريال`:"")+"\n\nشكرًا لكم."}
 
 /* ---------- recolor: keeps the photo's light and shade, swaps only the printed part's colour ---------- */
 /* every piece is pre-rendered in every colour at high resolution and checked by eye */
@@ -635,10 +641,14 @@ function saveAcc(){const n=$("#cn").value.trim().replace(/\s+/g," "),p=normPhone
 let PTS=null;
 const ptsTxt=()=>PTS==null?"":(LANG==="en"?"⭐ Your balance: "+PTS+" points":"⭐ رصيدك: "+PTS+" نقطة");
 function paintPts(){const t=ptsTxt();document.querySelectorAll("[data-pts]").forEach(e=>{e.textContent=t;e.hidden=!t});document.querySelectorAll("[data-ptsn]").forEach(e=>{e.textContent=PTS==null?"":" · ⭐ "+PTS})}
+/* key = PBKDF2-SHA256(normalised mobile, fixed app-wide salt, 300k iterations, 32-byte hex). MUST match ptsKey() in the invoicing app (/index.html). */
+const PTS_SALT="RAX3D|loyalty-points|v2|7f3c9a1e",PTS_ITER=300000;
+async function ptsKey(ph){const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(normPhone(ph)),"PBKDF2",false,["deriveBits"]);
+ const b=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:new TextEncoder().encode(PTS_SALT),iterations:PTS_ITER},k,256);
+ return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("")}
 async function loadPts(){PTS=null;if(!CUST||!window.crypto||!crypto.subtle){paintPts();return}
- try{const r=await fetch("points.json?"+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();
-  const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("rax3d:"+CUST.p));
-  const h=Array.from(new Uint8Array(d)).slice(0,8).map(x=>x.toString(16).padStart(2,"0")).join("");
+ try{const r=await fetch("points.json",{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();
+  const h=await ptsKey(CUST.p);
   PTS=Math.max(0,+((j.p||{})[h])||0)}catch(_){PTS=null}
  paintPts()}
 function logoutAcc(){CUST=null;PTS=null;try{localStorage.removeItem("rax3d_cust")}catch(_){}$("#abg").hidden=true;render(false)}
