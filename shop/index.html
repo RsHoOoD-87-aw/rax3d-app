@@ -4,35 +4,40 @@
 <meta name="description" content="RAX3D — اختر قطعتك واللون، ونطبعها لك بالطباعة ثلاثية الأبعاد">
 <link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#17130e"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f4eadb" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#2a2118" media="(prefers-color-scheme: dark)"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="RAX3D"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>RAX3D | اطلب قطعتك</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
 <style>
+/* انسجام الألوان مع خلفيات صور المنتجات: عائلة لونية واحدة، والصورة تذوب في البطاقة */
+.item,.cat{box-shadow:0 10px 24px -16px rgba(60,40,10,.35)}
+.item img{-webkit-mask-image:linear-gradient(#000 80%,transparent);mask-image:linear-gradient(#000 80%,transparent)}
+.item img,.cat img,.pic img{filter:var(--img-filter,none)}
+.item:hover,.cat:hover{border-color:var(--accent)}
 /* smooth scroll (Lenis) */
 html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}.lenis.lenis-stopped{overflow:clip}
 
 /* Layout: sticky top bar with back/forward + order; home = section cards + all pieces; sections live in a slide-in drawer opened from the top bar */
 :root{
-  --bg:#f6f1ea; --surface:#fffdf9; --fg:#231c14; --muted:#7a6c5c; --line:#e6dccd;
-  --accent:#a8792e; --accent-fg:#ffffff; --ink:#231c14; --ok:#2f7d4a; --ok-bg:#e6f2e9; --stage:#efe6da;
+  --bg:#f4eadb; --surface:#fcf6ea; --fg:#2a2015; --muted:#76624a; --line:#e3d4bb; --promo:#33261a;
+  --accent:#a8792e; --accent-fg:#ffffff; --ink:#231c14; --ok:#2f7d4a; --ok-bg:#e6f2e9; --stage:#ead9bf;
   --display:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;
   --body:"IBM Plex Sans Arabic","Readex Pro",system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#17130e; --surface:#211b14; --fg:#f2e9dc; --muted:#b3a38e; --line:#3a3026;
-  --accent:#d4a352; --accent-fg:#1b1309; --ink:#f2e9dc; --ok:#7fd39a; --ok-bg:#1e3326; --stage:#2a2219; color-scheme:dark}}
+  --bg:#2a2118; --surface:#352a1f; --fg:#f5ebd9; --muted:#c7b392; --line:#4f4130; --promo:#1d1710; --img-filter:brightness(.94) saturate(1.03);
+  --accent:#e2b560; --accent-fg:#241a0d; --ink:#f5ebd9; --ok:#7fd39a; --ok-bg:#25392b; --stage:#43362a; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#17130e; --surface:#211b14; --fg:#f2e9dc; --muted:#b3a38e; --line:#3a3026;
-  --accent:#d4a352; --accent-fg:#1b1309; --ink:#f2e9dc; --ok:#7fd39a; --ok-bg:#1e3326; --stage:#2a2219; color-scheme:dark}
+  --bg:#2a2118; --surface:#352a1f; --fg:#f5ebd9; --muted:#c7b392; --line:#4f4130; --promo:#1d1710; --img-filter:brightness(.94) saturate(1.03);
+  --accent:#e2b560; --accent-fg:#241a0d; --ink:#f5ebd9; --ok:#7fd39a; --ok-bg:#25392b; --stage:#43362a; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6;margin:0;
   padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:0 96px}
 button{font:inherit;color:inherit}
 button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.promo{display:block;overflow:hidden;background:#17130e;color:#f6efe4;border-bottom:1px solid rgba(224,177,85,.35);text-decoration:none;margin-inline:calc(-1 * max(12px,env(safe-area-inset-left,0px)));padding-top:calc(11px + env(safe-area-inset-top,0px));padding-bottom:11px;font-size:15.5px;font-weight:600;line-height:1.5;white-space:nowrap}
+.promo{display:block;overflow:hidden;background:var(--promo);color:#f6efe4;border-bottom:1px solid rgba(224,177,85,.35);text-decoration:none;margin-inline:calc(-1 * max(12px,env(safe-area-inset-left,0px)));padding-top:calc(11px + env(safe-area-inset-top,0px));padding-bottom:11px;font-size:15.5px;font-weight:600;line-height:1.5;white-space:nowrap}
 .promo .track{display:inline-flex;gap:48px;padding-inline:24px;animation:slide 48s linear infinite}
 .promo b{color:#e8b95a;font-weight:800}
 @keyframes slide{from{transform:translateX(0)}to{transform:translateX(50%)}}
