@@ -33,7 +33,7 @@ var t=document.querySelector('meta[name=theme-color]');if(t)t.setAttribute('cont
 :root[data-theme="light"]{
   color-scheme:light;
   --ink:#f5f0e4; --panel:#fffdf8; --line:#e3dac5; --field:#f4eee0;
-  --gold:#DDB03A; --gold-d:#B98A10; --gold-t:#7a5a05; --brand:#96700a;
+  --gold:#DDB03A; --gold-d:#B98A10; --gold-t:#7a5a05; --brand:#85610a;
   --text:#2a2519; --mute:#6a6353; --good:#1d7a3a; --bad:#c0392b;
   --scrim:rgba(30,22,6,.5); --scrim-party:rgba(247,242,230,.95); --track:#e7dfca; --bar:#fffdf8;
   --goal-bg:linear-gradient(135deg,#fff6dc,#fffdf6); --row-line:#ece4d1;
@@ -205,6 +205,8 @@ nav{box-shadow:var(--card-sh)}
 :root[data-theme="light"] nav button.on{box-shadow:var(--btn-sh)}
 input:focus,select:focus,textarea:focus{border-color:var(--gold-d);box-shadow:0 0 0 3px var(--ring)}
 textarea:focus{outline:none}
+::placeholder{color:var(--mute);opacity:.62}
+:root[data-theme="light"] ::placeholder{color:#6a6353;opacity:1}
 button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-offset:2px}
 .hbtn{min-height:32px}
 #themeBtn{padding:4px 10px;font-size:14px;line-height:1}
