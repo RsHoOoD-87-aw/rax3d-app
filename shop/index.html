@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="RAX3D — اختر قطعتك واللون، ونطبعها لك بالطباعة ثلاثية الأبعاد">
 <link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -496,7 +497,7 @@ function accCard(){return CUST?`<div class="acc on"><div class="row"><span>ال�
    :`<div class="acc"><b>سجّل واكسب نقاط ولاء ⭐</b><span class="inote">اسمك وجوالك بس، بدون رقم سري. كل ريال = نقطة، ويوصلنا طلبك جاهز باسمك.</span><button type="button" class="btn alt" data-acc>سجّل الحين (اختياري)</button></div>`}
 function cartView(){
   $("#ttl").textContent="طلبي";
-  $("#main").innerHTML=`<h2>طلبي</h2>${cart.length?`<div class="lines">${cart.map((o,i)=>`<div class="line"><img src="${IMG[o.id].thumb}" alt=""><div><b>${o.name}</b><small>${o.color} · ${o.qty} حبة${isW(o)?" · جملة":""}${o.size?" · مقاس "+o.size:""}${o.note?" · "+esc(o.note):""}</small></div>${UP(o.id,o.qty)?`<em class="pr">${SAR(LT(o))}</em>`:""}<button type="button" data-del="${i}" aria-label="حذف">×</button></div>`).join("")}</div>
+  $("#main").innerHTML=`<h2>طلبي</h2>${cart.length?`<div class="lines">${cart.map((o,i)=>`<div class="line"><img src="${IMG[o.id].thumb}" alt=""><div><b>${esc(String(o.name))}</b><small>${esc(String(o.color))} · ${o.qty} حبة${isW(o)?" · جملة":""}${o.size?" · مقاس "+esc(String(o.size)):""}${o.note?" · "+esc(o.note):""}</small></div>${UP(o.id,o.qty)?`<em class="pr">${SAR(LT(o))}</em>`:""}<button type="button" data-del="${i}" aria-label="حذف">×</button></div>`).join("")}</div>
   ${cart.some(o=>UP(o.id,o.qty))?`<p class="total">الإجمالي: ${cart.reduce((a,o)=>a+LT(o),0)} ريال</p>`:""}
   ${accCard()}
   <p class="note sendnote">📋 لما تضغط «أرسل الطلب بالخاص» ننسخ رسالة طلبك جاهزة، ونفتح لك محادثتنا في انستقرام. <b>الصقها في خانة الكتابة وأرسلها</b>، ونرد عليك بالسعر.</p>
