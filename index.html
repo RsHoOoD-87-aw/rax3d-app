@@ -501,7 +501,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-off
 <div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '48';
+const APP_VERSION = '49';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -2313,7 +2313,7 @@ function renderEdItems() {
     <div class="grid g3" style="margin-top:8px;grid-template-columns:1.4fr 1fr 1fr">
       <div><label>النوع</label><div class="seg"><button data-type="واحدة" class="${it.type === 'واحدة' ? 'on' : ''}">واحدة</button><button data-type="مجموعة" class="${it.type === 'مجموعة' ? 'on' : ''}">مجموعة / جملة</button></div></div>
       <div><label>العدد</label><input data-k="q" type="number" inputmode="numeric" value="${esc(it.q)}"></div>
-      <div><label>سعر الوحدة</label><input data-k="unit" type="number" inputmode="decimal" value="${esc(it.unit)}"></div></div>
+      <div><label>سعر مخصص للوحدة</label><input data-k="unit" type="number" inputmode="decimal" value="${esc(it.auto && edCalc(it) ? '' : it.unit)}" placeholder="${esc(edCalc(it) ? edCalc(it).sugg : '')}"></div></div>
     <div style="margin-top:8px"><label>خصم %</label><input data-k="dp" type="number" inputmode="decimal" value="${esc(fmt(+it.dp || 0))}"></div>
     <div class="hint" id="eh${i}"></div></div>`).join('');
   edSum();
@@ -2321,9 +2321,10 @@ function renderEdItems() {
 function edSum() {
   ED.items.forEach((it, i) => {
     const c = edCalc(it), h = $('eh' + i); if (!h) return;
-    if (c && it.auto) { it.unit = c.sugg; const u = document.querySelector('.ed-it[data-i="' + i + '"] [data-k="unit"]'); if (u && document.activeElement !== u) u.value = c.sugg; }
+    if (c && it.auto) { it.unit = c.sugg; const u = document.querySelector('.ed-it[data-i="' + i + '"] [data-k="unit"]'); if (u) { u.placeholder = c.sugg; if (document.activeElement !== u) u.value = ''; } }
+    else if (c) { const u = document.querySelector('.ed-it[data-i="' + i + '"] [data-k="unit"]'); if (u) u.placeholder = c.sugg; }
     h.innerHTML = !c ? 'اكتب الوزن والوقت عشان يتحسب السعر المقترح والربح بدقة'
-      : `التكلفة ${fmt(c.cost)} · المقترح ${fmt(c.sugg)} · ${it.auto ? 'السعر تلقائي' : 'سعر مخصص'}${+it.unit < c.cost ? ' <b style="color:var(--bad)">⚠️ أقل من التكلفة</b>' : ''}`;
+      : `التكلفة ${fmt(c.cost)} · المقترح ${fmt(c.sugg)} · ${it.auto ? 'السعر تلقائي — اكتب سعرك في خانة «سعر مخصص» لتغييره' : 'سعر مخصص — امسح الخانة للرجوع للتلقائي'}${+it.unit < c.cost ? ' <b style="color:var(--bad)">⚠️ أقل من التكلفة</b>' : ''}`;
   });
   const ln = i => Math.max(0, Math.floor(+i.q || 0)) * Math.max(0, +i.unit || 0);
   const sub = ED.items.reduce((a, i) => a + ln(i), 0);
