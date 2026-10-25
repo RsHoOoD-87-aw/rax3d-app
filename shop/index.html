@@ -324,12 +324,12 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
 <script src="lib/ScrollTrigger.min.js"></script>
 <script src="lib/lenis.min.js"></script>
 <script>
-const IMG={"disney": {"thumb": "thumbs/disney.jpg"}, "crown": {"thumb": "thumbs/crown.jpg"}, "ltr": {"thumb": "thumbs/ltr.jpg"}, "d1": {"thumb": "thumbs/d1.jpg"}, "d2": {"thumb": "thumbs/d2.jpg"}, "d3": {"thumb": "thumbs/d3.jpg"}, "d4": {"thumb": "thumbs/d4.jpg"}, "d5": {"thumb": "thumbs/d5.jpg"}, "d6": {"thumb": "thumbs/d6.jpg"}, "hood": {"thumb": "thumbs/hood.jpg"}, "skel": {"thumb": "thumbs/skel.jpg"}, "ks1": {"thumb": "thumbs/ks1.jpg"}, "ks2": {"thumb": "thumbs/ks2.jpg"}, "ks3": {"thumb": "thumbs/ks3.jpg"}, "kcm": {"thumb": "thumbs/kcm.jpg"}, "frame": {"thumb": "thumbs/frame.jpg"}, "hop": {"thumb": "thumbs/hop.jpg"}, "cup": {"thumb": "thumbs/cup.jpg"}, "ring": {"thumb": "thumbs/ring.jpg"}, "pbase": {"thumb": "thumbs/pbase.jpg"}, "chips": {"thumb": "thumbs/chips.jpg"}, "pringles": {"thumb": "thumbs/pringles.jpg"}, "clips": {"thumb": "thumbs/clips.jpg"}, "monk": {"thumb": "thumbs/monk.jpg"}, "ghost": {"thumb": "thumbs/ghost.jpg"}, "abst": {"thumb": "thumbs/abst.jpg"}, "w1": {"thumb": "thumbs/w1.jpg"}, "w2": {"thumb": "thumbs/w2.jpg"}, "w3": {"thumb": "thumbs/w3.jpg"}, "w4": {"thumb": "thumbs/w4.jpg"}, "w5": {"thumb": "thumbs/w5.jpg"}, "vase": {"thumb": "thumbs/vase.jpg"}, "vase2": {"thumb": "thumbs/vase2.jpg"}, "vase3": {"thumb": "thumbs/vase3.jpg"}};
+const IMG={"fish": {"thumb": "thumbs/fish.jpg"}, "disney": {"thumb": "thumbs/disney.jpg"}, "crown": {"thumb": "thumbs/crown.jpg"}, "ltr": {"thumb": "thumbs/ltr.jpg"}, "d1": {"thumb": "thumbs/d1.jpg"}, "d2": {"thumb": "thumbs/d2.jpg"}, "d3": {"thumb": "thumbs/d3.jpg"}, "d4": {"thumb": "thumbs/d4.jpg"}, "d5": {"thumb": "thumbs/d5.jpg"}, "d6": {"thumb": "thumbs/d6.jpg"}, "hood": {"thumb": "thumbs/hood.jpg"}, "skel": {"thumb": "thumbs/skel.jpg"}, "ks1": {"thumb": "thumbs/ks1.jpg"}, "ks2": {"thumb": "thumbs/ks2.jpg"}, "ks3": {"thumb": "thumbs/ks3.jpg"}, "kcm": {"thumb": "thumbs/kcm.jpg"}, "frame": {"thumb": "thumbs/frame.jpg"}, "hop": {"thumb": "thumbs/hop.jpg"}, "cup": {"thumb": "thumbs/cup.jpg"}, "ring": {"thumb": "thumbs/ring.jpg"}, "pbase": {"thumb": "thumbs/pbase.jpg"}, "chips": {"thumb": "thumbs/chips.jpg"}, "pringles": {"thumb": "thumbs/pringles.jpg"}, "clips": {"thumb": "thumbs/clips.jpg"}, "monk": {"thumb": "thumbs/monk.jpg"}, "ghost": {"thumb": "thumbs/ghost.jpg"}, "abst": {"thumb": "thumbs/abst.jpg"}, "w1": {"thumb": "thumbs/w1.jpg"}, "w2": {"thumb": "thumbs/w2.jpg"}, "w3": {"thumb": "thumbs/w3.jpg"}, "w4": {"thumb": "thumbs/w4.jpg"}, "w5": {"thumb": "thumbs/w5.jpg"}, "vase": {"thumb": "thumbs/vase.jpg"}, "vase2": {"thumb": "thumbs/vase2.jpg"}, "vase3": {"thumb": "thumbs/vase3.jpg"}};
 const COLORS=[["كما بالصورة",null],["أبيض","#f3f1ec"],["أسود","#242424"],["رمادي","#8f969a"],["أحمر","#cc2f2f"],["برتقالي","#ee7a1f"],["أصفر","#f2c22c"],["أخضر","#2f9a57"],["أزرق","#2a5cc8"],["بنفسجي","#7a4cc2"],["وردي","#ee6f9e"],["ذهبي","#c79a32"],["بني","#6e4a2e"]];
 const OUT=new Set([9]); /* colours not in stock right now (9 = purple) */
 const DUCK="تعليقة سيارة أو ديكور طبلون", KS="ميدالية مفاتيح وستاند جوال", XB="إكسسوار مكينة xBloom";
 /* PRICES:START — generated from the invoicing-app formula (print file weight + time, shared settings). [single, wholesale(=set)] */
-const PRICE={"disney":[31,24],"crown":[86,67],"d1":[84,66],"d3":[25,20],"d4":[28,22],"d5":[18,14],"d6":[25,19],"skel":[26,21],"ltr":[87,68],"w1":[31,24],"abst":[138,107],"chips":[25,20],"clips":[35,30],"ghost":[117,91],"ks1":[23,18],"ks2":[27,21],"ks3":[22,17],"monk":[116,90],"pringles":[30,25],"vase":[117,91],"vase2":[59,46],"vase3":[27,21],"w2":[37,29],"w3":[75,59],"w4":[23,18],"w5":[40,31]};
+const PRICE={"fish":[99,77],"disney":[31,24],"crown":[86,67],"d1":[84,66],"d3":[25,20],"d4":[28,22],"d5":[18,14],"d6":[25,19],"skel":[26,21],"ltr":[87,68],"w1":[31,24],"abst":[138,107],"chips":[25,20],"clips":[35,30],"ghost":[117,91],"ks1":[23,18],"ks2":[27,21],"ks3":[22,17],"monk":[116,90],"pringles":[30,25],"vase":[117,91],"vase2":[59,46],"vase3":[27,21],"w2":[37,29],"w3":[75,59],"w4":[23,18],"w5":[40,31]};
 const OLD={"chips":57,"pringles":67,"clips":62};
 /* PRICES:END */
 const ITEMS=[
@@ -362,6 +362,7 @@ const ITEMS=[
  {id:"w3",cat:"ألعاب وصفارات",name:"صفارة الناي",use:"صفارة متعددة النغمات"},
  {id:"w4",cat:"ألعاب وصفارات",name:"صفارة الجبن",use:"صفارة"},
  {id:"w5",cat:"ألعاب وصفارات",name:"صفارة الجمجمة",use:"صفارة بصوت قوي"},
+ {id:"fish",cat:"FORTNIGHT",name:"كأس السمكة الأسطورية",use:"كأس سمكة ذهبية على قاعدة، قطعتان تركّبهما"},
  {id:"crown",cat:"FORTNIGHT",name:"تاج الانتصار",use:"تاج الانتصار، ديكور أو هدية"},
  {id:"disney",cat:"الديكور",name:"لوحة ميكي وميني الجدارية",use:"لوحة جدارية بنقش ستنسل، تُثبت بلاصق"},
  {id:"ltr",cat:"الديكور",name:"حرف باسمك",use:"حرف مع اسمك وقلوب وزهرة، والاسم حسب طلبك"}
@@ -372,6 +373,7 @@ const WEIGHT={
  ks2:24,
  chips:55,
  crown:101,
+ fish:110,
  disney:24,
  clips:55,
  pringles:66,
@@ -388,6 +390,7 @@ const DIM={
  ks3:[39,66,12],
  ks2:[81,62,31],
  crown:[56,51,34],
+ fish:[117,145,175],
  disney:[207,173,3],
  chips:[81,222,81],
  clips:[61,79,57],
@@ -402,7 +405,7 @@ const DIM={
 };
 const MAXD=255;
 /* 3D models from the print files. file: path published next to the page. keep: names of 3MF parts that keep their own colour (beak, eyes...). Fill as: d1:{file:"models/d1.3mf",keep:["beak","eyes"]} */
-const MODELS={d4:{file:"models/d4.json",grid:true,keep:["keep"],def:1},d2:{file:"models/d2.json",grid:true,def:1},d3:{file:"models/d3.json",grid:true,def:1},d5:{file:"models/d5.json",grid:true,keep:["keep"],def:1},d6:{file:"models/d6.json",grid:true,def:1},skel:{file:"models/skel.json",grid:true,def:1},ltr:{file:"models/ltr.json",grid:true,keep:["keep"],def:10},vase:{file:"models/vase.json",grid:true},vase2:{file:"models/vase2.json",grid:true},vase3:{file:"models/vase3.json",grid:true},w5:{file:"models/w5.json",grid:true,def:3},w4:{file:"models/w4.json",grid:true,def:6},w2:{file:"models/w2.json",grid:true,def:6},w3:{file:"models/w3.json",grid:true,def:2},w1:{file:"models/w1.json",grid:true,keep:["keep"],def:2},ks1:{file:"models/ks1.json",grid:true,def:2},ks2:{file:"models/ks2.json",grid:true},ks3:{file:"models/ks3.json",grid:true},chips:{file:"models/chips.json",grid:true,keep:["keep"],def:2,rotZ:Math.PI*0.85},clips:{file:"models/clips.json",grid:true,def:4},crown:{file:"models/crown.json",grid:true,def:1},disney:{file:"models/disney.json",grid:true,def:2},pringles:{file:"models/pringles.json",grid:true,keep:["keep"],def:4,rotZ:Math.PI*0.85},monk:{file:"models/monk.json",grid:true,def:12},abst:{file:"models/abst.json",grid:true,def:2},ghost:{file:"models/ghost.json",grid:true,keep:["keep"],def:2}};
+const MODELS={d4:{file:"models/d4.json",grid:true,keep:["keep"],def:1},d2:{file:"models/d2.json",grid:true,def:1},d3:{file:"models/d3.json",grid:true,def:1},d5:{file:"models/d5.json",grid:true,keep:["keep"],def:1},d6:{file:"models/d6.json",grid:true,def:1},skel:{file:"models/skel.json",grid:true,def:1},ltr:{file:"models/ltr.json",grid:true,keep:["keep"],def:10},vase:{file:"models/vase.json",grid:true},vase2:{file:"models/vase2.json",grid:true},vase3:{file:"models/vase3.json",grid:true},w5:{file:"models/w5.json",grid:true,def:3},w4:{file:"models/w4.json",grid:true,def:6},w2:{file:"models/w2.json",grid:true,def:6},w3:{file:"models/w3.json",grid:true,def:2},w1:{file:"models/w1.json",grid:true,keep:["keep"],def:2},ks1:{file:"models/ks1.json",grid:true,def:2},ks2:{file:"models/ks2.json",grid:true},ks3:{file:"models/ks3.json",grid:true},chips:{file:"models/chips.json",grid:true,keep:["keep"],def:2,rotZ:Math.PI*0.85},clips:{file:"models/clips.json",grid:true,def:4},crown:{file:"models/crown.json",grid:true,def:1},disney:{file:"models/disney.json",grid:true,def:2},fish:{file:"models/fish.json",grid:true,def:11},pringles:{file:"models/pringles.json",grid:true,keep:["keep"],def:4,rotZ:Math.PI*0.85},monk:{file:"models/monk.json",grid:true,def:12},abst:{file:"models/abst.json",grid:true,def:2},ghost:{file:"models/ghost.json",grid:true,keep:["keep"],def:2}};
 ITEMS.forEach(i=>{if(WEIGHT[i.id])i.g=WEIGHT[i.id];if(DIM[i.id])i.d=DIM[i.id]});
 const CAT_ORDER=["إكسسوارات السيارة","إكسسوارات القهوة","إكسسوارات المكتب","الديكور","ميداليات","سناك وضيافة","ألعاب وصفارات","FORTNIGHT"];
 const CATS=[...new Set(ITEMS.map(i=>i.cat))].sort((a,b)=>CAT_ORDER.indexOf(a)-CAT_ORDER.indexOf(b));
