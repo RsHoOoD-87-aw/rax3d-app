@@ -315,7 +315,8 @@ textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:
  <div class="flinks"><button type="button" data-pol="ret">الاستبدال والاسترجاع</button><button type="button" data-pol="priv">سياسة الخصوصية</button><button type="button" data-pol="track">متابعة الطلب</button><button type="button" data-pol="contact">تواصل معنا</button></div>
  <p>RAX3D · طباعة ثلاثية الأبعاد · الدمام، السعودية</p>
  <p>وثيقة العمل الحر: <span dir="ltr">FL-255870895</span></p>
- <p><a href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener" dir="ltr">@rax3d.sa</a> · <a href="mailto:rax3d.sa@hotmail.com" dir="ltr">rax3d.sa@hotmail.com</a></p>
+ <p dir="ltr"><a href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener">Instagram @rax3d.sa</a> · <a href="https://www.tiktok.com/@rax3d.sa" target="_blank" rel="noopener">TikTok @rax3d.sa</a></p>
+ <p><a href="mailto:rax3d.sa@hotmail.com" dir="ltr">rax3d.sa@hotmail.com</a></p>
 </footer>
 
 <!-- three.js + loaders load on demand the first time the 3D viewer opens (load3D below) -->
@@ -741,6 +742,7 @@ const POL={
   <li>مع التسليم توصلك فاتورة فيها رصيد نقاط الولاء حقك.</li></ul>`],
  contact:["تواصل معنا",`<ul>
   <li>انستقرام (الأسرع): <a href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener" dir="ltr">@rax3d.sa</a></li>
+  <li>تيك توك: <a href="https://www.tiktok.com/@rax3d.sa" target="_blank" rel="noopener" dir="ltr">@rax3d.sa</a></li>
   <li>الإيميل: <a href="mailto:rax3d.sa@hotmail.com" dir="ltr">rax3d.sa@hotmail.com</a></li>
   <li>الموقع: الدمام، المملكة العربية السعودية</li>
   <li>وثيقة العمل الحر: <span dir="ltr">FL-255870895</span></li></ul>
@@ -749,7 +751,7 @@ const POL_EN={
  ret:["Returns & exchanges",`<p>Every piece is printed to order, in the colour and size you choose.</p><ul><li>If your piece arrives broken, with a print defect, or different from your order (colour or size), message us within <b>3 days</b> of delivery with a photo and we'll reprint or replace it free.</li><li>Because pieces are made for you, we can't accept returns for a change of mind once printing has started.</li><li>You can cancel free of charge before printing starts.</li><li>Custom pieces (names, text or a changed size) are replaced only if defective.</li><li>Slight colour variation or visible layer lines are normal in 3D printing and aren't defects.</li></ul>`],
  priv:["Privacy policy",`<ul><li>The site only asks for your name and mobile, and signing in is optional.</li><li>Your details stay on your own device and only reach us inside your order message.</li><li>We use them only to prepare your order, invoice and loyalty points, and never share or sell them.</li><li>No ads and no tracking cookies.</li><li>Clear your details from “My account → Sign out”, or ask us by DM to delete your record.</li></ul>`],
  track:["Track your order",`<p>Once we confirm your order and issue the invoice, your order gets an <b>order number</b> like ORD-125, printed on the invoice.</p><ul><li>Send us your order number by DM any time and we'll reply with your order status.</li><li>Stages: received → price confirmed → printing → ready for delivery.</li><li>On delivery you get an invoice showing your loyalty points balance.</li></ul>`],
- contact:["Contact us",`<ul><li>Instagram (fastest): <a href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener">@rax3d.sa</a></li><li>Email: <a href="mailto:rax3d.sa@hotmail.com">rax3d.sa@hotmail.com</a></li><li>Location: Dammam, Saudi Arabia</li><li>Freelance licence: FL-255870895</li></ul><p class="muted">Price, payment and delivery are agreed with you by DM before printing.</p>`]};
+ contact:["Contact us",`<ul><li>Instagram (fastest): <a href="https://www.instagram.com/rax3d.sa/" target="_blank" rel="noopener">@rax3d.sa</a></li><li>TikTok: <a href="https://www.tiktok.com/@rax3d.sa" target="_blank" rel="noopener">@rax3d.sa</a></li><li>Email: <a href="mailto:rax3d.sa@hotmail.com">rax3d.sa@hotmail.com</a></li><li>Location: Dammam, Saudi Arabia</li><li>Freelance licence: FL-255870895</li></ul><p class="muted">Price, payment and delivery are agreed with you by DM before printing.</p>`]};
 function openPol(k){const p=(LANG==="en"?POL_EN:POL)[k];if(!p)return;$("#pt").textContent=p[0];$("#pbody").innerHTML=p[1];$("#pbg").hidden=false}
 document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
  if(t.dataset.edit){go({v:"edit",id:t.dataset.edit});return}
