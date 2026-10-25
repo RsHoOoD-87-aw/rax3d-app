@@ -501,7 +501,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-off
 <div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '50';
+const APP_VERSION = '51';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -749,7 +749,7 @@ async function doReset(sync, d) {
   return ts;
 }
 const DEF_MAIL = 'rax3d.sa@hotmail.com';
-const SIGN = 'فريق RAX3D للطباعة ثلاثية الأبعاد — الدمام · إنستقرام وتيك توك @rax3d.sa';
+const SIGN = 'فريق RAX3D للطباعة ثلاثية الأبعاد — إنستقرام وتيك توك @rax3d.sa';
 const maskMail = m => String(m).replace(/^(.{2})[^@]*(@.*)$/, '$1•••$2');
 function mailTo() {   // إيميل الإشعارات: عند الدعم الفني من إعداداته، وعند مدخل البيانات من الإعدادات المشتركة
   const db = loadDb();
