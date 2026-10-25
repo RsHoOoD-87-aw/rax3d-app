@@ -501,7 +501,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-off
 <div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '47';
+const APP_VERSION = '48';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -1201,6 +1201,34 @@ function drawInvoice(r, logo) {
     box(M, y, tw - tl, rh, last ? '#111' : null); txt(v, M + (tw - tl) / 2, y + rh / 2, { a: 'center', w: last ? 700 : 400, s: last ? 30 : 24, c: last ? GOLDL : INK });
     y += rh;
   });
+  // سياسة الاستبدال والاسترجاع (تنطبع على كل فاتورة)
+  const POLICY = [
+    'إذا وصلتك القطعة مكسورة، أو فيها عيب طباعة، أو تختلف عن طلبك في اللون أو المقاس، راسلنا خلال 3 أيام من الاستلام مع صورة، ونعيد طباعتها أو نستبدلها مجاناً.',
+    'لأن القطع تنصنع لك خصيصاً، ما نقبل الإرجاع بسبب تغيير الرأي بعد بدء الطباعة.',
+    'تقدر تلغي طلبك مجاناً قبل ما نبدأ الطباعة.',
+    'القطع المخصصة (اسم أو عبارة أو مقاس معدّل) تُستبدل فقط إذا فيها عيب.',
+    'الفرق البسيط في درجة اللون أو ظهور خطوط الطبقات طبيعي في الطباعة ثلاثية الأبعاد، وما يُعتبر عيب.'
+  ];
+  {
+    const pfy = H - 230, pw = W - 2 * M - 40, free = pfy - 20 - (y + 30);
+    const wrap = (t, size, maxW) => {
+      c.font = '400 ' + size + 'px ' + F; c.direction = 'rtl';
+      const words = t.split(' '), lines = []; let cur = '';
+      for (const w of words) { const tr = cur ? cur + ' ' + w : w; if (c.measureText(tr).width > maxW && cur) { lines.push(cur); cur = w; } else cur = tr; }
+      if (cur) lines.push(cur); return lines;
+    };
+    const build = sz => { const lh = Math.round(sz * 1.5), blocks = POLICY.map(t => wrap(t, sz, pw - 40)); return { sz, lh, blocks, h: 66 + blocks.reduce((a, b) => a + b.length * lh + 6, 0) + 14 }; };
+    let lay = build(22); while (lay.h > free && lay.sz > 16) lay = build(lay.sz - 1);
+    if (lay.h <= free) {
+      const top = pfy - 20 - lay.h;
+      box(M, top, W - 2 * M, lay.h, CREAM);
+      txt('سياسة الاستبدال والاسترجاع', R - 20, top + 30, { w: 700, s: 26, c: GOLD });
+      let ly = top + 70;
+      lay.blocks.forEach(b => { b.forEach((ln, k) => { if (k === 0) txt('•', R - 20, ly, { s: lay.sz, c: GOLD, w: 700 }); txt(ln, R - 44, ly, { s: lay.sz, c: '#333' }); ly += lay.lh; }); ly += 6; });
+    } else {
+      txt('الاستبدال والاسترجاع: للعيوب خلال 3 أيام من الاستلام، والتفاصيل في rax3dsa.github.io/shop', W / 2, y + 45, { a: 'center', s: 22, c: '#444' });
+    }
+  }
   // الفوتر
   const fy = H - 230;
   c.fillStyle = GOLD; c.fillRect(M, fy, W - 2 * M, 5);
