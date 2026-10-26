@@ -502,7 +502,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-off
 <div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '52';
+const APP_VERSION = '53';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -605,8 +605,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 function b64e(str) { const b = new TextEncoder().encode(str); let o = ''; for (let i = 0; i < b.length; i += 0x8000) o += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(o); }
 function b64d(str) { const bin = atob(String(str).replace(/\s/g, '')); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
 // v47: التوكن يُستخدم على المستودع الخاص (rax3dsa/rax3d-data) فقط. أي مستودع *.github.io (الموقع العام) مرفوض،
-// إلا الكتابة الوحيدة المعزولة publicWritePoints() على shop/points.json (انظر تحت).
-const PUBLIC_REPO_RE = /\.github\.io$/i;
+// إلا الكتابة الوحيدة المعزولة publicWritePoints() على points.json في مستودع المتجر rax3d-shop (انظر تحت).
+const PUBLIC_REPO_RE = /(\.github\.io|\/rax3d-shop)$/i;
 function gh(sync, method, body, path) {
   if (PUBLIC_REPO_RE.test(String(sync.repo)) && !(sync._public && sync._public === path)) return Promise.reject(new Error('ممنوع: رمز GitHub يُستخدم على المستودع الخاص فقط'));
   const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 12000);
@@ -689,10 +689,10 @@ async function pushShared(newPin) {   // الدعم الفني يرسل الإع
   return true;
 }
 const pushSharedSoon = () => { pushShared().catch(() => {}); };
-// ===== نشر أرصدة نقاط الولاء للموقع (shop/points.json) =====
+// ===== نشر أرصدة نقاط الولاء للموقع (points.json في مستودع المتجر rax3d-shop) =====
 // v47: المفتاح = PBKDF2-SHA256(الجوال، ملح ثابت للتطبيق، 300 ألف تكرار، 32 بايت hex) — نفس الحساب بالضبط في المتجر (shop/index.html ptsKey).
 // الملف فيه مفتاح ← نقاط فقط (بدون أسماء أو جوالات أو مبالغ).
-const PTS_REPO = 'rax3dsa/rax3dsa.github.io', PTS_PATH = 'shop/points.json';
+const PTS_REPO = 'rax3dsa/rax3d-shop', PTS_PATH = 'points.json';
 const PTS_SALT = 'RAX3D|loyalty-points|v2|7f3c9a1e', PTS_ITER = 300000, PTS_CACHE = 'rax3d_ptskeys';
 async function ptsKey(ph) { return hex(await pbkdf2(normPhone(ph), PTS_SALT, PTS_ITER, 256)); }
 async function publishPoints() {
@@ -706,7 +706,7 @@ async function publishPoints() {
   try { localStorage.setItem('rax3d_pts_v', '2'); } catch (e) {}
   return Object.keys(p).length;
 }
-// ⚠️ هذي الكتابة الوحيدة على المستودع العام (الموقع rax3dsa.github.io) ومحصورة في ملف واحد: shop/points.json.
+// ⚠️ هذي الكتابة الوحيدة على المستودع العام (المتجر rax3d.com) ومحصورة في ملف واحد: points.json.
 // كل القراءة والكتابة الثانية تروح للمستودع الخاص فقط (gh() يرفض غيره). لو التوكن Fine-grained على rax3d-data بس،
 // هذي الخطوة بتفشل بهدوء (403) والأرصدة ما تتحدث بالموقع — وكل شي ثاني يشتغل عادي.
 async function publicWritePoints(token, p) {
@@ -1227,7 +1227,7 @@ function drawInvoice(r, logo) {
       let ly = top + 70;
       lay.blocks.forEach(b => { b.forEach((ln, k) => { if (k === 0) txt('•', R - 20, ly, { s: lay.sz, c: GOLD, w: 700 }); txt(ln, R - 44, ly, { s: lay.sz, c: '#333' }); ly += lay.lh; }); ly += 6; });
     } else {
-      txt('الاستبدال والاسترجاع: للعيوب خلال 3 أيام من الاستلام، والتفاصيل في rax3dsa.github.io/shop', W / 2, y + 45, { a: 'center', s: 22, c: '#444' });
+      txt('الاستبدال والاسترجاع: للعيوب خلال 3 أيام من الاستلام، والتفاصيل في rax3d.com', W / 2, y + 45, { a: 'center', s: 22, c: '#444' });
     }
   }
   // الفوتر
@@ -1934,7 +1934,7 @@ function updateForgot() { $('forgotBtn').hidden = !loadDb().role; }
 
 
 // ================= v36: الربط مع موقع الطلبات + ملفات الطباعة =================
-// موقع العملاء (rax3dsa.github.io/shop) يحط في رسالة الطلب رابط فيه ?order=… ، والبرنامج يعبي الفاتورة منه.
+// موقع العملاء (rax3d.com) يحط في رسالة الطلب رابط فيه ?order=… ، والبرنامج يعبي الفاتورة منه.
 // ملفات الطباعة في المستودع الخاص files/<id>.3mf وبياناتها files/<id>.json ، وما تنحمل إلا بعد رمز الدخول.
 let ORDER = null;   // الطلب اللي انعبت منه الفاتورة الحالية (عشان إيميل ملفات الطباعة)
 function b64uDecode(s) { s = String(s).replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return b64d(s); }
@@ -1942,7 +1942,7 @@ const B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 function b62bytes(s) { let n = 0n; for (const ch of s) { const v = B62.indexOf(ch); if (v < 0) throw new Error('bad'); n = n * 62n + BigInt(v); } const out = []; while (n > 0n) { out.unshift(Number(n % 256n)); n /= 256n; } return new Uint8Array(out.slice(1)); }
 async function inflateRaw(bytes) { const ds = new DecompressionStream('deflate-raw'); const s = new Blob([bytes]).stream().pipeThrough(ds); return new Uint8Array(await new Response(s).arrayBuffer()); }
 let CATALOG = null;
-async function catalog() { if (CATALOG) return CATALOG; try { const r = await fetch('/shop/catalog.json', { cache: 'no-store' }); CATALOG = await r.json(); } catch (e) { CATALOG = { items: {}, colors: [] }; } return CATALOG; }
+async function catalog() { if (CATALOG) return CATALOG; for (const u of ['https://rax3d.com/catalog.json', '/shop/catalog.json']) { try { const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) continue; CATALOG = await r.json(); if (CATALOG && CATALOG.items) return CATALOG; } catch (e) {} } CATALOG = { items: {}, colors: [] }; return CATALOG; }
 function parseMsg(text, cat) {   // رسالة الطلب الجديدة (بدون رابط): نقرأ الخانات سطر سطر
   const s = String(text || ''); if (!/(القطعة|القطعه|Piece)\s*:/.test(s)) return null;
   const val = (blk, keys) => { for (const k of keys) { const m = blk.match(new RegExp('\\*?\\s*' + k + '\\s*:\\s*(.*)')); if (m) return m[1].trim(); } return ''; };
