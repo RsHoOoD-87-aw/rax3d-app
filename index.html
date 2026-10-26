@@ -502,7 +502,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-off
 <div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '54';
+const APP_VERSION = '55';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -514,7 +514,7 @@ function loadDb() {
   d.log = Array.isArray(d.log) ? d.log : []; d.catalog = Array.isArray(d.catalog) ? d.catalog : [];
   d.nextNum = Number(d.nextNum) || 1; d.pins = d.pins || null; d.fails = d.fails || { n: 0, until: 0 };
   d.role = d.role || (d.pins && (d.pins.admin || d.pins.adminH) ? 'admin' : null);   // جوال الدعم الفني أو جوال مدخل البيانات
-  d.shared = d.shared || null; d.pending = Array.isArray(d.pending) ? d.pending : [];
+  d.shared = d.shared || null; d.pending = Array.isArray(d.pending) ? d.pending : []; d.redeems = Array.isArray(d.redeems) ? d.redeems : [];
   if (d.recMail === 'rax3d.sa@gmail.com' || d.recMail === 'rashid.aw@hotmail.com') d.recMail = null;   // الإيميل المعتمد الجديد
   return d;
 }
@@ -522,6 +522,15 @@ function saveDb(d) { localStorage.setItem(DB_KEY, JSON.stringify(d)); try { clou
 const isLive = r => !!r && r.status !== 'ملغاة';   // v47: الفاتورة الملغاة تبقى برقمها بس ما تدخل في المجاميع والنقاط
 // v54: النقطة تنتهي بعد 12 شهراً من تاريخ كسبها (تاريخ الفاتورة)
 const ptsAlive = r => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String((r && r.date) || '')); if (!m) return true; const c = new Date(); c.setFullYear(c.getFullYear() - 1); return new Date(+m[1], +m[2] - 1, +m[3]) >= c; };
+// v55: رصيد العميل = نقاط فواتيره (ما انتهت) ناقص ما استبدله. الاستبدال يخصم من الأقدم أولاً (FIFO).
+const PTS_RULES = { discPts: 1000, discSar: 10, freePts: 5000, freeMax: 250 };
+function ptsBalanceFor(ph, db) {
+  db = db || loadDb();
+  const lots = (db.log || []).filter(r => isLive(r) && normPhone(r.phone) === ph).map(r => ({ date: String(r.date || ''), amt: Math.floor(+r.total || 0) })).filter(l => l.amt > 0).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+  let red = (db.redeems || []).filter(x => normPhone(x.phone) === ph).reduce((a, x) => a + (+x.pts || 0), 0), bal = 0;
+  for (const l of lots) { let a = l.amt; const t = Math.min(a, red); a -= t; red -= t; if (a > 0 && ptsAlive({ date: l.date })) bal += a; }
+  return bal;
+}
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
 const todayStr = () => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); };
 const R2 = v => Math.round(Number(v || 0) * 100) / 100;
@@ -700,7 +709,7 @@ async function ptsKey(ph) { return hex(await pbkdf2(normPhone(ph), PTS_SALT, PTS
 async function publishPoints() {
   const sync = getSync(); if (!sync) throw new Error('اربط الترقيم المشترك أولاً (الإحصائيات ← الترقيم المشترك)');
   const bal = new Map();
-  (loadDb().log || []).forEach(r => { if (!isLive(r) || !ptsAlive(r)) return; const ph = normPhone(r.phone); if (ph.length < 9) return; bal.set(ph, (bal.get(ph) || 0) + Math.floor(+r.total || 0)); });
+  const db0 = loadDb(); (db0.log || []).forEach(r => { if (!isLive(r)) return; const ph = normPhone(r.phone); if (ph.length >= 9 && !bal.has(ph)) bal.set(ph, ptsBalanceFor(ph, db0)); });
   let cache = {}; try { cache = JSON.parse(localStorage.getItem(PTS_CACHE) || '{}') || {}; } catch (e) {}
   const p = {}; for (const [ph, v] of bal) if (v > 0) { if (!cache[ph]) cache[ph] = await ptsKey(ph); p[cache[ph]] = v; }
   try { localStorage.setItem(PTS_CACHE, JSON.stringify(cache)); } catch (e) {}
@@ -1137,8 +1146,8 @@ function getLogo() {
 function normPhone(v) { let d = String(v || '').replace(/[٠-٩]/g, c => '٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/\D/g, ''); if (d.startsWith('00966')) d = d.slice(5); else if (d.startsWith('966')) d = d.slice(3); if (d.length === 9 && d[0] === '5') d = '0' + d; return d; }
 function loyalty(phone, r) {   // يرجع { earned: نقاط هذي الفاتورة, balance: الرصيد حتى هذي الفاتورة (أو الحين لو ما فيه فاتورة) }
   const ph = normPhone(phone); if (ph.length < 9) return null;
-  const log = (loadDb().log || []); let bal = 0;
-  for (const x of log) { if (isLive(x) && (r || ptsAlive(x)) && normPhone(x.phone) === ph) bal += Math.floor(+x.total || 0); if (r && x === r) break; if (r && rk(x) === rk(r)) break; }
+  const log = (loadDb().log || []); let bal = r ? 0 : ptsBalanceFor(ph);
+  for (const x of (r ? log : [])) { if (isLive(x) && normPhone(x.phone) === ph) bal += Math.floor(+x.total || 0); if (r && x === r) break; if (r && rk(x) === rk(r)) break; }
   return { earned: r && isLive(r) ? Math.floor(+r.total || 0) : 0, balance: bal };
 }
 function drawInvoice(r, logo) {
@@ -1305,7 +1314,7 @@ function cloudInd(ok) { const el = document.getElementById('cloudInd'); if (!el)
 async function cloudBackup() {
   const sync = getSync(), db = loadDb(); if (!sync || !db.role) return;
   if (bkBusy) { cloudBackupSoon(); return; }
-  const data = { v: 1, app: APP_VERSION, role: db.role, nextNum: db.nextNum, settings: db.settings, catalog: db.catalog, log: db.log, pending: db.pending };
+  const data = { v: 1, app: APP_VERSION, role: db.role, nextNum: db.nextNum, settings: db.settings, catalog: db.catalog, log: db.log, pending: db.pending, redeems: db.redeems };
   const body = JSON.stringify(data); if (body === bkLast) return;
   bkBusy = true;
   try { await updateJson(sync, 'backups/' + db.role + '/log.json', null, () => Object.assign({ savedAt: new Date().toISOString() }, data), 'نسخة تلقائية للسجل'); bkLast = body; cloudInd(true); }
@@ -1460,14 +1469,49 @@ function resetForm() { ORDER = null; if ($('ptsHint')) $('ptsHint').textContent 
 
 const pts = r => isLive(r) && normPhone(r.phone).length >= 9 ? Math.floor(+r.total || 0) : 0;   // نقاط الفاتورة: ريال = نقطة (للفواتير اللي فيها جوال)
 function loyaltyCard() {   // ترتيب العملاء حسب رصيد نقاط الولاء
-  const m = new Map();
-  DATA.log.forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9 || !isLive(r)) return; const c = m.get(ph) || { ph, name: '', pts: 0, n: 0 }; c.pts += ptsAlive(r) ? pts(r) : 0; c.n++; if (r.client) c.name = r.client; m.set(ph, c); });
+  const db = loadDb(), m = new Map();
+  DATA.log.forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9 || !isLive(r)) return; const c = m.get(ph) || { ph, name: '', pts: 0, n: 0 }; c.n++; if (r.client) c.name = r.client; m.set(ph, c); });
+  m.forEach(c => { c.pts = ptsBalanceFor(c.ph, db); });
   const list = [...m.values()].sort((a, b) => b.pts - a.pts);
   const total = list.reduce((a, c) => a + c.pts, 0);
+  const rd = (db.redeems || []).slice().reverse().slice(0, 5);
   return `<div class="period"><h3>⭐ نقاط الولاء</h3><div class="kv"><div>العملاء<b>${list.length}</b></div><div>إجمالي النقاط<b>${total}</b></div><div>ريال = نقطة<b>1</b></div></div>
-    <p style="margin:8px 0 0;font-size:12px;color:var(--mute)">1000 نقطة = خصم 10 ريال · 5000 نقطة = قطعة مجانية حتى 500 ريال · تنتهي النقطة بعد 12 شهراً · لا تُستبدل بمبالغ مالية.</p>
-    ${list.length ? '<div style="margin-top:10px;display:grid;gap:6px">' + list.slice(0, 15).map((c, i) => `<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line,#333);padding-top:6px"><span>${i + 1}. ${esc(c.name || 'بدون اسم')} <small style="color:var(--mute)" dir="ltr">${esc(c.ph)}</small> <small style="color:var(--mute)">· ${c.n} فاتورة</small></span><b style="color:var(--gold-t)">${c.pts}</b></div>`).join('') + '</div>' : '<p style="color:var(--mute);margin:8px 0 0">النقاط تبدأ لما تحفظ فاتورة فيها رقم جوال العميل.</p>'}
+    <p style="margin:8px 0 0;font-size:12px;color:var(--mute)">1000 نقطة = خصم 10 ريال · 5000 نقطة = قطعة مجانية حتى 250 ريال · تنتهي النقطة بعد 12 شهراً · لا تُستبدل بمبالغ مالية.</p>
+    ${list.length ? '<div style="margin-top:10px;display:grid;gap:6px">' + list.slice(0, 15).map((c, i) => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line,#333);padding-top:6px"><span>${i + 1}. ${esc(c.name || 'بدون اسم')} <small style="color:var(--mute)" dir="ltr">${esc(c.ph)}</small> <small style="color:var(--mute)">· ${c.n} فاتورة</small></span><span style="display:flex;align-items:center;gap:8px"><b style="color:var(--gold-t)">${c.pts}</b>${c.pts >= PTS_RULES.discPts ? `<button type="button" class="ghost" style="margin:0;padding:4px 10px;font-size:12px" onclick="openRedeem('${esc(c.ph)}')">استبدل</button>` : ''}</span></div>`).join('') + '</div>' : '<p style="color:var(--mute)">ما فيه عملاء بجوال بعد.</p>'}
+    ${rd.length ? '<div style="margin-top:12px;font-size:12px;color:var(--mute)">آخر الاستبدالات:</div><div style="display:grid;gap:4px;font-size:12px">' + rd.map(x => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(x.date)} · ${esc(x.name || x.phone)} · ${x.kind === 'free' ? 'قطعة مجانية' + (x.item ? ' (' + esc(x.item) + ')' : '') : 'خصم ' + x.sar + ' ريال'} · −${x.pts}</span><button type="button" class="ghost" style="margin:0;padding:2px 8px;font-size:11px" onclick="undoRedeem('${esc(x.id)}')">تراجع</button></div>`).join('') + '</div>' : ''}
     <button type="button" class="ghost" style="margin-top:10px" onclick="const b=this;b.disabled=true;publishPoints().then(n=>toast('✔ اننشرت أرصدة '+n+' عميل للموقع')).catch(e=>toast('تعذّر النشر: '+((e&&e.message)||e))).finally(()=>b.disabled=false)">🔄 انشر الأرصدة للموقع</button></div>`;
+}
+// ===== v55: استبدال النقاط (خصم أو قطعة مجانية) =====
+function openRedeem(ph) {
+  const db = loadDb(), bal = ptsBalanceFor(ph, db), c = (db.log || []).filter(r => normPhone(r.phone) === ph && r.client).pop();
+  let el = document.getElementById('rdSheet');
+  if (!el) { el = document.createElement('div'); el.className = 'sheet'; el.id = 'rdSheet'; document.body.appendChild(el); el.addEventListener('click', e => { if (e.target === el) el.classList.remove('on'); }); }
+  const maxD = Math.floor(bal / PTS_RULES.discPts);
+  el.innerHTML = `<div class="box"><h2>استبدال نقاط</h2><p style="margin:0 0 8px">${esc((c && c.client) || '')} <small dir="ltr" style="color:var(--mute)">${esc(ph)}</small></p><div class="tot">${bal}</div>
+    <label for="rdKind">النوع</label><select id="rdKind"><option value="disc">خصم ${PTS_RULES.discSar} ريال لكل ${PTS_RULES.discPts} نقطة</option>${bal >= PTS_RULES.freePts ? `<option value="free">قطعة مجانية (${PTS_RULES.freePts} نقطة، حتى ${PTS_RULES.freeMax} ريال)</option>` : ''}</select>
+    <div id="rdD"><label for="rdN">عدد الخصومات (كل واحد ${PTS_RULES.discPts} نقطة)</label><input id="rdN" type="number" min="1" max="${maxD}" value="1" inputmode="numeric"></div>
+    <div id="rdF" hidden><label for="rdItem">القطعة المجانية</label><input id="rdItem" maxlength="60" placeholder="اسم القطعة"></div>
+    <p id="rdSum" style="color:var(--gold-t)"></p>
+    <button type="button" class="save" id="rdGo">تأكيد الاستبدال</button><button type="button" class="ghost" id="rdX">إلغاء</button></div>`;
+  const kind = el.querySelector('#rdKind'), n = el.querySelector('#rdN'), sum = el.querySelector('#rdSum');
+  const upd = () => { const f = kind.value === 'free'; el.querySelector('#rdD').hidden = f; el.querySelector('#rdF').hidden = !f; const k = Math.max(1, Math.min(maxD, Math.floor(+n.value) || 1)); sum.textContent = f ? 'يُخصم ' + PTS_RULES.freePts + ' نقطة، وتُجهّز القطعة المجانية بدون تجاوز ' + PTS_RULES.freeMax + ' ريال.' : 'يُخصم ' + (k * PTS_RULES.discPts) + ' نقطة، والخصم ' + (k * PTS_RULES.discSar) + ' ريال على الفاتورة القادمة.'; };
+  kind.onchange = upd; n.oninput = upd; upd();
+  el.querySelector('#rdX').onclick = () => el.classList.remove('on');
+  el.querySelector('#rdGo').onclick = () => {
+    const d2 = loadDb(), b2 = ptsBalanceFor(ph, d2), free = kind.value === 'free';
+    const k = free ? 1 : Math.max(1, Math.min(Math.floor(b2 / PTS_RULES.discPts), Math.floor(+n.value) || 1)), need = free ? PTS_RULES.freePts : k * PTS_RULES.discPts;
+    if (b2 < need) { toast('الرصيد ما يكفي'); return; }
+    const item = free ? String(el.querySelector('#rdItem').value || '').trim().slice(0, 60) : '';
+    d2.redeems.push({ id: newId(), phone: ph, name: (c && c.client) || '', kind: free ? 'free' : 'disc', pts: need, sar: free ? 0 : k * PTS_RULES.discSar, item, date: todayStr() });
+    saveDb(d2); publishPointsSoon(); el.classList.remove('on');
+    toast(free ? '✔ استبدال قطعة مجانية، خُصم ' + need + ' نقطة' : '✔ خصم ' + (k * PTS_RULES.discSar) + ' ريال، خُصم ' + need + ' نقطة');
+    try { renderStats(); } catch (e) {}
+  };
+  el.classList.add('on');
+}
+function undoRedeem(id) {
+  const d = loadDb(), i = d.redeems.findIndex(x => x.id === id); if (i < 0) return;
+  d.redeems.splice(i, 1); saveDb(d); publishPointsSoon(); toast('تم التراجع عن الاستبدال'); try { renderStats(); } catch (e) {}
 }
 function renderLog() {
   const q = $('q').value.trim().toLowerCase(), oq = ($('oq') ? $('oq').value : '').replace(/[^0-9]/g, '');
