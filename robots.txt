@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /shop/
+Sitemap: https://rax3dsa.github.io/sitemap.xml
