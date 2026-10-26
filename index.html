@@ -502,7 +502,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-off
 <div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '56';
+const APP_VERSION = '57';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -2103,7 +2103,8 @@ $('ordBtn').onclick = () => { $('ordErr').textContent = ''; $('ordIn').value = '
   try { navigator.clipboard.readText().then(t => { if (/(القطعة|Piece)\s*:/.test(t) || /RX2[zj]/.test(t) || parseOrder(t)) $('ordIn').value = t; }).catch(() => {}); } catch (e) {} };
 $('ordClose').onclick = () => $('ordSheet').classList.remove('on');
 $('ordGo').onclick = async () => { const v = $('ordIn').value, o = parseMsg(v, await catalog()) || (await parseCode(v)) || parseOrder(v); if (!o) { $('ordErr').textContent = 'ما لقينا كود طلب صحيح — تأكد إنك نسخت الكود كامل'; return; }
-  $('ordSheet').classList.remove('on'); fillFromOrder(o); };
+  $('ordSheet').classList.remove('on'); fillFromOrder(o);
+  const rq = v.match(/(?:استبدال نقاط الولاء|Loyalty redemption)\s*:\s*(.*)/); if (rq) setTimeout(() => toast('🎁 العميل طلب استبدال نقاط: ' + rq[1].trim().slice(0, 80) + ' — تأكد من رصيده ثم اضغط «استبدل» في الإحصائيات'), 600); };
 $('pcBtn').onclick = openPieces;
 new MutationObserver(() => document.documentElement.classList.toggle('sheetopen', !!document.querySelector('.sheet.on'))).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
 $('pcClose').onclick = () => $('pcSheet').classList.remove('on');
