@@ -502,7 +502,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-off
 <div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '53';
+const APP_VERSION = '54';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
@@ -520,6 +520,8 @@ function loadDb() {
 }
 function saveDb(d) { localStorage.setItem(DB_KEY, JSON.stringify(d)); try { cloudBackupSoon(); } catch (e) {} }
 const isLive = r => !!r && r.status !== 'ملغاة';   // v47: الفاتورة الملغاة تبقى برقمها بس ما تدخل في المجاميع والنقاط
+// v54: النقطة تنتهي بعد 12 شهراً من تاريخ كسبها (تاريخ الفاتورة)
+const ptsAlive = r => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String((r && r.date) || '')); if (!m) return true; const c = new Date(); c.setFullYear(c.getFullYear() - 1); return new Date(+m[1], +m[2] - 1, +m[3]) >= c; };
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
 const todayStr = () => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); };
 const R2 = v => Math.round(Number(v || 0) * 100) / 100;
@@ -698,7 +700,7 @@ async function ptsKey(ph) { return hex(await pbkdf2(normPhone(ph), PTS_SALT, PTS
 async function publishPoints() {
   const sync = getSync(); if (!sync) throw new Error('اربط الترقيم المشترك أولاً (الإحصائيات ← الترقيم المشترك)');
   const bal = new Map();
-  (loadDb().log || []).forEach(r => { if (!isLive(r)) return; const ph = normPhone(r.phone); if (ph.length < 9) return; bal.set(ph, (bal.get(ph) || 0) + Math.floor(+r.total || 0)); });
+  (loadDb().log || []).forEach(r => { if (!isLive(r) || !ptsAlive(r)) return; const ph = normPhone(r.phone); if (ph.length < 9) return; bal.set(ph, (bal.get(ph) || 0) + Math.floor(+r.total || 0)); });
   let cache = {}; try { cache = JSON.parse(localStorage.getItem(PTS_CACHE) || '{}') || {}; } catch (e) {}
   const p = {}; for (const [ph, v] of bal) if (v > 0) { if (!cache[ph]) cache[ph] = await ptsKey(ph); p[cache[ph]] = v; }
   try { localStorage.setItem(PTS_CACHE, JSON.stringify(cache)); } catch (e) {}
@@ -1136,7 +1138,7 @@ function normPhone(v) { let d = String(v || '').replace(/[٠-٩]/g, c => '٠١٢
 function loyalty(phone, r) {   // يرجع { earned: نقاط هذي الفاتورة, balance: الرصيد حتى هذي الفاتورة (أو الحين لو ما فيه فاتورة) }
   const ph = normPhone(phone); if (ph.length < 9) return null;
   const log = (loadDb().log || []); let bal = 0;
-  for (const x of log) { if (isLive(x) && normPhone(x.phone) === ph) bal += Math.floor(+x.total || 0); if (r && x === r) break; if (r && rk(x) === rk(r)) break; }
+  for (const x of log) { if (isLive(x) && (r || ptsAlive(x)) && normPhone(x.phone) === ph) bal += Math.floor(+x.total || 0); if (r && x === r) break; if (r && rk(x) === rk(r)) break; }
   return { earned: r && isLive(r) ? Math.floor(+r.total || 0) : 0, balance: bal };
 }
 function drawInvoice(r, logo) {
@@ -1459,10 +1461,11 @@ function resetForm() { ORDER = null; if ($('ptsHint')) $('ptsHint').textContent 
 const pts = r => isLive(r) && normPhone(r.phone).length >= 9 ? Math.floor(+r.total || 0) : 0;   // نقاط الفاتورة: ريال = نقطة (للفواتير اللي فيها جوال)
 function loyaltyCard() {   // ترتيب العملاء حسب رصيد نقاط الولاء
   const m = new Map();
-  DATA.log.forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9 || !isLive(r)) return; const c = m.get(ph) || { ph, name: '', pts: 0, n: 0 }; c.pts += pts(r); c.n++; if (r.client) c.name = r.client; m.set(ph, c); });
+  DATA.log.forEach(r => { const ph = normPhone(r.phone); if (ph.length < 9 || !isLive(r)) return; const c = m.get(ph) || { ph, name: '', pts: 0, n: 0 }; c.pts += ptsAlive(r) ? pts(r) : 0; c.n++; if (r.client) c.name = r.client; m.set(ph, c); });
   const list = [...m.values()].sort((a, b) => b.pts - a.pts);
   const total = list.reduce((a, c) => a + c.pts, 0);
   return `<div class="period"><h3>⭐ نقاط الولاء</h3><div class="kv"><div>العملاء<b>${list.length}</b></div><div>إجمالي النقاط<b>${total}</b></div><div>ريال = نقطة<b>1</b></div></div>
+    <p style="margin:8px 0 0;font-size:12px;color:var(--mute)">1000 نقطة = خصم 10 ريال · 5000 نقطة = قطعة مجانية حتى 500 ريال · تنتهي النقطة بعد 12 شهراً · لا تُستبدل بمبالغ مالية.</p>
     ${list.length ? '<div style="margin-top:10px;display:grid;gap:6px">' + list.slice(0, 15).map((c, i) => `<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line,#333);padding-top:6px"><span>${i + 1}. ${esc(c.name || 'بدون اسم')} <small style="color:var(--mute)" dir="ltr">${esc(c.ph)}</small> <small style="color:var(--mute)">· ${c.n} فاتورة</small></span><b style="color:var(--gold-t)">${c.pts}</b></div>`).join('') + '</div>' : '<p style="color:var(--mute);margin:8px 0 0">النقاط تبدأ لما تحفظ فاتورة فيها رقم جوال العميل.</p>'}
     <button type="button" class="ghost" style="margin-top:10px" onclick="const b=this;b.disabled=true;publishPoints().then(n=>toast('✔ اننشرت أرصدة '+n+' عميل للموقع')).catch(e=>toast('تعذّر النشر: '+((e&&e.message)||e))).finally(()=>b.disabled=false)">🔄 انشر الأرصدة للموقع</button></div>`;
 }
