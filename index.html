@@ -622,6 +622,20 @@ function calcLocal(S, it) {
   const disc = R2(unit * q * (+it.disc || 0) / 100);
   return { cost, sugg, unit, q, disc, line: R2(unit * q), total: R2(unit * q - disc), profit: R2(unit * q - disc - cost * q) };
 }
+// فاتورة جاية من المتجر (دفع إلكتروني): نحسب التكلفة من القطع المحفوظة عندك لو عندك وزنها ووقتها، وإلا من الوزن فقط
+function fillOnlineCost(db, rec) {
+  const S = db.settings; let cost = 0, est = false;
+  (rec.items || []).forEach(it => {
+    const k = (db.catalog || []).find(c => normN(c.desc) === normN(it.desc));
+    const src = k && +k.w > 0 ? k : (+it.w > 0 ? it : null);
+    if (!src) { est = true; return; }
+    if (!k) est = true;
+    const c = calcLocal(S, { w: +src.w || 0, h: +src.h || 0, m: +src.m || 0, sec: +src.sec || 0, q: 1 });
+    it.cost = R2(c.cost); it.w = +src.w || 0; it.h = +src.h || 0; it.m = +src.m || 0; it.sec = +src.sec || 0;
+    cost += c.cost * (+it.q || 1);
+  });
+  rec.profit = R2((Number(rec.total) || 0) - cost); if (est) rec.costEst = true;
+}
 // ================= الترقيم المشترك (مستودع خاص في GitHub) =================
 const SYNC_KEY = 'rax3d_sync';   // منفصل عن البيانات عشان ما يدخل في النسخة الاحتياطية
 function getSync() { try { const v = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); return v && v.token && v.repo ? v : null; } catch (e) { return null; } }
@@ -1071,24 +1085,31 @@ const API = {
   async adminSync(pin) {   // يستلم فواتير مدخل البيانات ويقرأ طلباته
     await adminDb(pin); const sync = getSync();
     if (!sync) return { off: true, requests: [], imported: 0 };
-    let imported = 0, catChanged = false;
+    let imported = 0, importedOnline = 0, voided = 0, catChanged = false;
     await updateJson(sync, 'partner_log.json', [], arr => {
       if (!Array.isArray(arr) || !arr.length) return undefined;
       const db = loadDb();
       arr.forEach(r => {
-        if (!r || !r.num) return;
+        if (!r) return;
+        if (r.void) {   // استرداد من ميسر ← الفاتورة تتحول «ملغاة» (الرقم يبقى، وتطلع من المجاميع والنقاط)
+          const x = db.log.find(y => Number(y.num) === Number(r.void) && y.online);
+          if (x && isLive(x)) { x.status = 'ملغاة'; x.voidAt = r.voidAt || todayStr(); x.refunded = true; voided++; }
+          return;
+        }
+        if (!r.num) return;
         (r.cat || []).forEach(c => { upsertCat(db.catalog, c); catChanged = true; });
         const rec = Object.assign({}, r, { by: 'partner' }); delete rec.cat;
-        if (!db.log.some(x => rk(x) === rk(rec))) { db.log.push(rec); imported++; db.nextNum = Math.max(db.nextNum, Number(rec.num) + 1); }
+        if (rec.online) fillOnlineCost(db, rec);   // فاتورة من المتجر: التكلفة والربح تنحسب من إعداداتك
+        if (!db.log.some(x => rk(x) === rk(rec))) { db.log.push(rec); imported++; if (rec.online) importedOnline++; db.nextNum = Math.max(db.nextNum, Number(rec.num) + 1); }
       });
       db.log.sort((a, b) => (Number(a.num) || 0) - (Number(b.num) || 0));
       saveDb(db);   // انحفظت عند الدعم الفني أولاً، بعدين ننظف الملف المشترك
       return [];
     }, 'استلام فواتير مدخل البيانات');
     if (catChanged) pushSharedSoon();
-    if (imported) publishPointsSoon();
+    if (imported || voided) publishPointsSoon();
     const rq = await readJson(sync, 'requests.json', []);
-    return { requests: Array.isArray(rq.data) ? rq.data : [], imported: imported };
+    return { requests: Array.isArray(rq.data) ? rq.data : [], imported: imported, importedOnline: importedOnline, voided: voided };
   },
   async resolveRequest(d, pin) {
     await adminDb(pin); const sync = getSync(); if (!sync) throw new Error('الترقيم المشترك غير مفعّل');
@@ -1541,7 +1562,7 @@ function renderLog() {
     (r.client + ' ' + r.phone + ' ' + r.num + ' ' + r.desc + ' ' + (r.code || '')).toLowerCase().includes(q));
   $('logList').innerHTML = rows.length ? rows.map(r => `
     <div class="row">
-      <div class="row-h"><b>${esc(r.client || 'بدون اسم')}${r.by === 'partner' ? '<span class="tag p">📝 مدخل البيانات</span>' : ''}${r.edited ? '<span class="tag">معدّلة</span>' : ''}${!isLive(r) ? '<span class="tag" style="color:var(--bad);border-color:var(--bad)">🚫 ملغاة</span>' : ''}${pts(r) ? '<span class="tag" style="color:var(--gold-t)">⭐ +' + pts(r) + '</span>' : ''}</b><span class="amt"${!isLive(r) ? ' style="text-decoration:line-through;opacity:.55"' : ''}>${fmt(r.total)} ريال</span></div>
+      <div class="row-h"><b>${esc(r.client || 'بدون اسم')}${r.online ? '<span class="tag p">🛒 المتجر</span>' : r.by === 'partner' ? '<span class="tag p">📝 مدخل البيانات</span>' : ''}${r.edited ? '<span class="tag">معدّلة</span>' : ''}${!isLive(r) ? '<span class="tag" style="color:var(--bad);border-color:var(--bad)">🚫 ملغاة</span>' : ''}${pts(r) ? '<span class="tag" style="color:var(--gold-t)">⭐ +' + pts(r) + '</span>' : ''}</b><span class="amt"${!isLive(r) ? ' style="text-decoration:line-through;opacity:.55"' : ''}>${fmt(r.total)} ريال</span></div>
       <p>${esc(r.desc)}</p>
       <div class="meta"><span><b dir="ltr" style="color:var(--gold-t)">ORD-${esc(r.num)}</b> &nbsp; ${esc(r.date)}${r.phone ? ' &nbsp; ' + esc(r.phone) : ''}${r.code ? ' &nbsp; <span dir="ltr">' + esc(r.code) + '</span>' : ''}</span>
       <span class="acts">${isLive(r) ? `<button class="pdf dl adm" data-ed="${esc(rk(r))}">✏️ تعديل</button>` : ''}<button class="pdf" data-dl="1" data-num="${esc(rk(r))}">📄 PDF</button></span></div>
@@ -2294,10 +2315,11 @@ function pollAdmin() {
       const n = REQS.filter(x => x.status === 'new').length;
       const msgs = [];
       if (n > lastNew && n > 0) msgs.push(lastNew < 0 ? '📩 عندك ' + n + ' طلب من مدخل البيانات' : '📩 وصلك طلب جديد من مدخل البيانات');
-      if (r.imported) msgs.push('📥 وصلت ' + r.imported + ' فاتورة من مدخل البيانات');
+      if (r.imported) msgs.push(r.importedOnline ? '🛒 وصلت ' + r.importedOnline + ' فاتورة من المتجر' + (r.imported > r.importedOnline ? ' + ' + (r.imported - r.importedOnline) + ' من مدخل البيانات' : '') : '📥 وصلت ' + r.imported + ' فاتورة من مدخل البيانات');
+      if (r.voided) msgs.push('🚫 انلغت ' + r.voided + ' فاتورة بسبب استرداد');
       if (msgs.length) toast(msgs.join(' · '));
       lastNew = n; renderBell();
-      if (r.imported) load();
+      if (r.imported || r.voided) load();
       if ($('ntSheet').classList.contains('on')) renderNt();
     })
     .withFailureHandler(e => { if (pinError(e)) return; NT_ERR = 'تعذّر التحديث: ' + errTxt(e); if ($('ntSheet').classList.contains('on')) renderNt(); })
