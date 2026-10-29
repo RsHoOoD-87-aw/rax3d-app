@@ -502,11 +502,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold-d);outline-off
 <div id="cloudInd" hidden aria-live="polite" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.75;z-index:5;pointer-events:none"></div>
 
 <script>
-const APP_VERSION = '57';
+const APP_VERSION = '58';
 // ================= RAX3D — v25: حسابين + الدعم الفني + تحديث تلقائي =================
 // كل البيانات محفوظة داخل الجوال. لا Google ولا إيميل.
 const DB_KEY = 'rax3d_db';
-const DEF_SETTINGS = { spool: 115, spoolW: 1000, run: 1.15, waste: 0.1, pack: 2.3, multSet: 3.5, multOne: 4.5, goalStart: 10000 };
+const DEF_SETTINGS = { spool: 115, spoolW: 1000, run: 1.15, waste: 0.1, pack: 2.3, multSet: 3.5, multOne: 4.5, payFee: 4, goalStart: 10000 };
 function loadDb() {
   let d = null; try { d = JSON.parse(localStorage.getItem(DB_KEY) || 'null'); } catch (e) {}
   if (!d || typeof d !== 'object') d = {};
@@ -1393,7 +1393,7 @@ function calcItem(it) {
   const unit = custom ? pr : sugg;
   const disc = r2(unit * q * (+it.disc || 0) / 100);
   const total = unit * q - disc;
-  return { cost, sugg, unit, custom, disc, total, profit: total - cost * q, gap: sugg * q - total };
+  return { cost, sugg, shop: Math.ceil(sugg * (1 + (S.payFee || 0) / 100) - 1e-9), unit, custom, disc, total, profit: total - cost * q, gap: sugg * q - total };
 }
 
 function newItem() { return { desc: '', w: '', h: '', m: '', sec: '', type: 'واحدة', q: 1, disc: 0, price: '' }; }
@@ -1432,7 +1432,7 @@ function updateTotals() {
   items.forEach((it, i) => {
     const c = calcItem(it), el = $('c' + i);
     if (!c) { el.innerHTML = '<span>اكتب الوزن لحساب السعر</span>'; const w0 = $('w' + i); if (w0) w0.textContent = ''; return; }
-    el.innerHTML = `<span>سعر الوحدة <b>${fmt(c.unit)}</b>${c.custom ? ` <small style="color:var(--mute)">(المقترح ${fmt(c.sugg)})</small>` : ''}</span><span>الإجمالي <b>${fmt(c.total)}</b></span><span class="adm">الربح <b style="color:${c.profit < 0 ? 'var(--bad)' : 'inherit'}">${fmt(c.profit)}</b></span>`;
+    el.innerHTML = `<span>سعر الوحدة <b>${fmt(c.unit)}</b>${c.custom ? ` <small style="color:var(--mute)">(المقترح ${fmt(c.sugg)})</small>` : ''} <small style="color:var(--mute)">· سعر المتجر أونلاين ${fmt(c.shop)}</small></span><span>الإجمالي <b>${fmt(c.total)}</b></span><span class="adm">الربح <b style="color:${c.profit < 0 ? 'var(--bad)' : 'inherit'}">${fmt(c.profit)}</b></span>`;
     const w = $('w' + i);
     if (w) w.textContent = c.unit < c.cost ? (DATA && DATA.role === 'partner' ? '⚠️ السعر أقل من التكلفة — راجع السعر' : `⚠️ السعر أقل من التكلفة (${fmt(c.cost)} ريال) — بتخسر في هذي القطعة`) : '';
     t += c.total; d += c.disc; p += c.profit;
@@ -1909,7 +1909,7 @@ async function checkMonthly() {   // أول ما ينفتح التطبيق في 
 
 // ================= إعدادات، نسخ احتياطي، أول تشغيل =================
 const SET_FIELDS = [['spool', 'سعر البكرة (ريال)'], ['spoolW', 'وزن البكرة (جم)'], ['run', 'التشغيل للساعة (ريال)'], ['waste', 'الهدر (0.1 = 10%)'],
-  ['pack', 'التغليف (ريال)'], ['multOne', 'مضاعف القطعة الواحدة'], ['multSet', 'مضاعف المجموعة والجملة'], ['goalStart', 'هدف المبيعات الأول'], ['nextNum', 'رقم الفاتورة القادم']];
+  ['pack', 'التغليف (ريال)'], ['multOne', 'مضاعف القطعة الواحدة'], ['multSet', 'مضاعف المجموعة والجملة'], ['payFee', 'رسوم الدفع الإلكتروني على سعر المتجر (%)'], ['goalStart', 'هدف المبيعات الأول'], ['nextNum', 'رقم الفاتورة القادم']];
 function renderSettings() {
   if (!DATA) return;
   const v = Object.assign({}, DATA.settings, { nextNum: DATA.nextNum });
