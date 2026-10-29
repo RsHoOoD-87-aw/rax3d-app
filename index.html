@@ -888,7 +888,13 @@ const API = {
     const sync = getSync();
     if (role === 'partner' && !sync) throw new Error('جوال مدخل البيانات غير مربوط — اطلب رمز ربط جديد من الدعم الفني');
     let num;
-    if (sync) { num = await reserveNumber(sync, db.nextNum); db = loadDb(); }
+    const pre = Number(data.num);   // رقم محجوز مسبقاً من طلب مدفوع بالموقع (ORD-n)
+    if (Number.isInteger(pre) && pre > 0) {
+      if (db.log.some(r => Number(r.num) === pre)) throw new Error('فاتورة ORD-' + pre + ' محفوظة من قبل');
+      if (sync) { const c = await readCounter(sync); if (c.next !== null && pre >= c.next) throw new Error('رقم الطلب ORD-' + pre + ' غير صحيح'); }
+      num = pre;
+    }
+    else if (sync) { num = await reserveNumber(sync, db.nextNum); db = loadDb(); }
     else { num = db.nextNum; while (db.log.some(r => Number(r.num) === num)) num++; }
     const lines = its.map(it => { const c = calcLocal(S, it); return { desc: String(it.desc).trim(), q: c.q, unit: c.unit, line: c.line, disc: c.disc, total: c.total, profit: c.profit, cost: R2(c.cost), sugg: (+it.price > 0) ? c.sugg * c.q : 0, w: +it.w || 0, h: +it.h || 0, m: +it.m || 0, sec: +it.sec || 0, type: it.type === 'مجموعة' ? 'مجموعة' : 'واحدة', auto: !(+it.price > 0), dp: Math.min(100, Math.max(0, +it.disc || 0)) }; });
     const before = db.log.filter(isLive).reduce((a, r) => a + (Number(r.total) || 0), 0);
@@ -1474,7 +1480,7 @@ $('saveBtn').onclick = () => {
       if (pinError(err)) return;
       $('err').textContent = 'لم تُحفظ الفاتورة: ' + (err.message || err);
     })
-    .saveFromApp({ client: $('client').value, phone: $('phone').value, items: valid, code: ORDER && ORDER.o && ORDER.o.ref || '' }, PIN);
+    .saveFromApp({ client: $('client').value, phone: $('phone').value, items: valid, code: ORDER && ORDER.o && ORDER.o.ref || '', num: ORDER && ORDER.o && ORDER.o.num || 0 }, PIN);
 };
 let lastNum = null;
 $('doneSave').onclick = () => { $('done').classList.remove('on'); if (lastNum !== null) savePdf(lastNum); };
@@ -2019,8 +2025,8 @@ function parseMsg(text, cat) {   // رسالة الطلب الجديدة (بدو
     return [id || name, it.n || name, color, q, it.g || 0, size, note];
   }).filter(x => x[1]);
   if (!items.length) return null;
-  const n = val(s, ['الاسم', 'Name']), ph = val(s, ['الجوال', 'Mobile']), ref = (s.match(/RX-[A-Z0-9]{4,8}/) || [''])[0];
-  return { v: 3, i: items, c: n || ph ? [n, ph] : null, ref };
+  const n = val(s, ['الاسم', 'Name']), ph = val(s, ['الجوال', 'Mobile']), ref = (s.match(/RX-[A-Z0-9]{4,8}/) || [''])[0], on = (s.match(/ORD-(\d{1,7})/) || [])[1];
+  return { v: 3, i: items, c: n || ph ? [n, ph] : null, ref, num: on ? +on : 0 };
 }
 async function parseCode(text) {   // كود الطلب من الموقع: RX2 + z (مضغوط) أو j + base62
   const m = String(text || '').match(/RX2([zj])([0-9A-Za-z]{6,})/); if (!m) return null;
