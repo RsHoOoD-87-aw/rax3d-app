@@ -738,12 +738,19 @@ async function publishPoints() {
   const sync = getSync(); if (!sync) throw new Error('اربط الترقيم المشترك أولاً (الإحصائيات ← الترقيم المشترك)');
   const bal = new Map();
   const db0 = loadDb(); (db0.log || []).forEach(r => { if (!isLive(r)) return; const ph = normPhone(r.phone); if (ph.length >= 9 && !bal.has(ph)) bal.set(ph, ptsBalanceFor(ph, db0)); });
-  let cache = {}; try { cache = JSON.parse(localStorage.getItem(PTS_CACHE) || '{}') || {}; } catch (e) {}
-  const p = {}; for (const [ph, v] of bal) if (v > 0) { if (!cache[ph]) cache[ph] = await ptsKey(ph); p[cache[ph]] = v; }
-  try { localStorage.setItem(PTS_CACHE, JSON.stringify(cache)); } catch (e) {}
-  await publicWritePoints(sync.token, p);
-  try { localStorage.setItem('rax3d_pts_v', '2'); } catch (e) {}
-  return Object.keys(p).length;
+  // 1) النسخة الخاصة (مستودع rax3d-data): جوال ← نقاط. الـ worker يقرأ منها لما العميل يفتح المتجر، فما عاد يحتاج الموقع ملف عام فيه الأرصدة.
+  const priv = {}; for (const [ph, v] of bal) if (v > 0) priv[ph] = v;
+  await updateJson(sync, 'points_private.json', null, cur => (cur && cur.v === 1 && JSON.stringify(cur.p) === JSON.stringify(priv)) ? undefined : { v: 1, updated: Date.now(), p: priv }, 'تحديث أرصدة النقاط (خاص)');
+  // 2) النسخة العامة المشفرة (points.json في المتجر): مؤقتة لين يتأكد أن الموقع يقرأ من الـ worker، وبعدها تنحذف هذي الخطوة.
+  //    فشلها (مثلاً الرمز بدون صلاحية المتجر) ما يوقف النسخة الخاصة.
+  try {
+    let cache = {}; try { cache = JSON.parse(localStorage.getItem(PTS_CACHE) || '{}') || {}; } catch (e) {}
+    const p = {}; for (const [ph, v] of bal) if (v > 0) { if (!cache[ph]) cache[ph] = await ptsKey(ph); p[cache[ph]] = v; }
+    try { localStorage.setItem(PTS_CACHE, JSON.stringify(cache)); } catch (e) {}
+    await publicWritePoints(sync.token, p);
+  } catch (e) {}
+  try { localStorage.setItem('rax3d_pts_v', '3'); } catch (e) {}
+  return Object.keys(priv).length;
 }
 // ⚠️ هذي الكتابة الوحيدة على المستودع العام (المتجر rax3d.com) ومحصورة في ملف واحد: points.json.
 // كل القراءة والكتابة الثانية تروح للمستودع الخاص فقط (gh() يرفض غيره). لو التوكن Fine-grained على rax3d-data بس،
@@ -2614,7 +2621,7 @@ try { if (localStorage.getItem('rax3d_updated')) { localStorage.removeItem('rax3
 
 // v47: ترحيل الرمز من نص صريح إلى هاش، وترحيل مفاتيح نقاط الولاء للصيغة الجديدة (مرة وحدة من جوال الدعم الفني)
 migratePins().catch(() => {});
-setTimeout(() => { try { if (loadDb().role === 'admin' && getSync() && localStorage.getItem('rax3d_pts_v') !== '2') publishPointsSoon(); } catch (e) {} }, 8000);
+setTimeout(() => { try { if (loadDb().role === 'admin' && getSync() && localStorage.getItem('rax3d_pts_v') !== '3') publishPointsSoon(); } catch (e) {} }, 8000);
 if (LR) { $('boot').textContent = ''; $('linkReset').classList.add('on'); setTimeout(() => $('lr1').focus(), 80); }
 else {
   checkUpdate();
